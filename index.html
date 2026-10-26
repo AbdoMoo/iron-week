@@ -372,6 +372,29 @@ label.btn{cursor:pointer}
 .xbtn{color:var(--ink2);margin-left:8px;min-width:28px;min-height:28px}
 .fields textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%;min-width:0;resize:vertical;text-transform:none;letter-spacing:0}
 @media (prefers-reduced-motion: reduce){.trophy{animation:none}}
+.habits{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:12px}
+.hb-hd{display:flex;align-items:center;justify-content:space-between}
+.hb-form{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:6px}
+.hb-form label{display:grid;gap:3px;font-size:12px;font-weight:600;color:var(--ink2);min-width:0}
+.hb-form input{font:inherit;font-size:18px;font-weight:700;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;height:44px;padding:0 10px;width:100%;min-width:0;font-variant-numeric:tabular-nums}
+.hb-form small{font-size:11px;font-weight:600}
+.hb-bar{height:6px;border-radius:3px;background:var(--surface2);margin-top:10px;overflow:hidden}
+.hb-bar i{display:block;height:100%;background:var(--good);border-radius:3px}
+.hb-note{margin:8px 0 0;font-size:13px;color:var(--ink2)}
+.hb-note b{color:var(--ink)}
+.hb-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:10px;font-size:13px;font-weight:600}
+.bars{width:100%;height:84px;display:block;margin-top:4px}
+.bars rect.hit{fill:var(--good)}.bars rect.miss{fill:var(--eq)}.bars rect.none{fill:transparent}
+.bars .goal{stroke:var(--ink2);stroke-width:1;stroke-dasharray:4 3}
+.bars text{fill:var(--ink2);font-size:9px;font-family:var(--body)}
+.goalcard{background:var(--surface);border:1px solid var(--line);border-left:0;border-radius:var(--r);padding:14px;margin-bottom:12px;position:relative;overflow:hidden}
+.goalcard h3{font-family:var(--display);font-weight:800;font-size:26px;text-transform:uppercase;margin:2px 0 8px}
+.goalcard ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.goalcard li{display:flex;gap:10px;font-size:14px;line-height:1.35}
+.goalcard li i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:12px;background:var(--surface2);color:var(--ink2)}
+.goalcard li.ok i{background:var(--good-bg);color:var(--good)}
+.goalcard li.warn i{background:color-mix(in srgb,var(--yellow) 25%,var(--surface));color:var(--ink)}
+.hrzone{display:block;margin-top:4px;font-weight:700;color:var(--red)}
 .editbtn{font-weight:700;font-size:14px;min-height:36px;padding:0 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .elist{display:grid;gap:8px}
 .erow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
@@ -1253,7 +1276,9 @@ const ANIM3D = {
     const del = { s: uniq([...((a.del || {}).s || []), ...((b.del || {}).s || [])]), e: uniq([...((a.del || {}).e || []), ...((b.del || {}).e || [])]), b: uniq([...((a.del || {}).b || []), ...((b.del || {}).b || [])]) };
     const delS = new Set(del.s), delE = new Set(del.e), delB = new Set(del.b);
     const bm = new Map(); [...(a.body || []), ...(b.body || [])].forEach(x => { if (!delB.has(x.t)) bm.set(x.t, x); });
-    const out = { log: {}, sessions: [], del, body: [...bm.values()].sort((x, y) => x.t - y.t).slice(-400) };
+    const daily = {}; [a.daily || {}, b.daily || {}].forEach(src => Object.keys(src).forEach(k => { daily[k] = Object.assign({}, daily[k] || {}, src[k]); }));
+    const keep = Object.keys(daily).sort().slice(-400); const dailyOut = {}; keep.forEach(k => { dailyOut[k] = daily[k]; });
+    const out = { log: {}, sessions: [], del, body: [...bm.values()].sort((x, y) => x.t - y.t).slice(-400), daily: dailyOut };
     const ids = new Set([...Object.keys(a.log || {}), ...Object.keys(b.log || {})]);
     ids.forEach(id => {
       const m = new Map();
@@ -1606,6 +1631,7 @@ const ANIM3D = {
     let s = topBar(false);
     s += `<section class="intro"><h1 class="disp" style="font-size:44px">Pick today's session</h1><p>Four lifting days and an optional cardio and core day. Every lifting day starts with a 5-minute warm-up and ends with pull-ups and crunches.</p></section>`;
     s += nextCard();
+    s += habitsCard();
     s += `<div class="weekhd"><span class="lbl">This week</span><button class="linkbtn" data-act="calendar">Full calendar ›</button></div>`;
     s += weekStrip();
     const nxDay = nextPlanned().day;
@@ -1636,7 +1662,7 @@ const ANIM3D = {
     const complete = c.kind === 'time' ? !!(draft && draft.done[id]) : ndone >= c.sets;
     const l = logOf(id, c.v).filter(x => (x.k || 'kg') === c.kind), last = l[l.length - 1];
     let hint = '';
-    if (c.kind === 'time') hint = esc(c.setting || '');
+    if (c.kind === 'time') { const g = GOALS(); hint = esc(c.setting || '') + `<span class="hrzone">♥ Heart rate ${g.hrLo}–${g.hrHi} · easy pace, you can still talk</span>`; }
     else if (readyUp(c)) hint = `<span class="hint up">All sets done last time<br><button class="upbtn" data-act="up" data-id="${id}">${c.assist ? 'Try less help' : 'Go up'}: ${fmtW(nextVal(c))} ${shortU(c.kind)}</button></span>`;
     else if (last) hint = `Last: ${entrySetsTxt(last) ? esc(entrySetsTxt(last)) : fmtW(entryVal(last)) + ' ' + shortU(c.kind) + ' · ' + last.d + '/' + last.n + ' sets'} · ${fmtD(last.t)}`;
     else if (c.kind === 'kg' && c.w == null) hint = 'First time on this one. Tap + to set your weight.';
@@ -1806,6 +1832,70 @@ const ANIM3D = {
     return s + '</svg>';
   }
 
+  // ---------- goals & daily habits ----------
+  const GOALS = () => Object.assign({ aim: 'recomp', steps: 7000, sleep: 7, hrLo: 115, hrHi: 135 }, prefs.goals || {});
+  const isoDay = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const dayData = k => (hist.daily && hist.daily[k]) || {};
+  function lastDays(n) { const out = []; for (let i = n - 1; i >= 0; i--) out.push(isoDay(addDays(dayStart(Date.now()), -i))); return out; }
+  function avgOf(field, n) { const v = lastDays(n).map(k => dayData(k)[field]).filter(x => x != null && x > 0); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; }
+  function miniBars(keys, field, goal, fmt) {
+    const vals = keys.map(k => dayData(k)[field] || 0); const mx = Math.max(goal * 1.25, ...vals) || 1;
+    const W = 300, H = 70, bw = W / keys.length;
+    let s = `<svg class="bars" viewBox="0 0 ${W} ${H + 14}" preserveAspectRatio="none" aria-hidden="true"><line class="goal" x1="0" x2="${W}" y1="${(H - goal / mx * H).toFixed(1)}" y2="${(H - goal / mx * H).toFixed(1)}"/>`;
+    vals.forEach((v, i) => { const h = v / mx * H; s += `<rect class="${v >= goal ? 'hit' : v ? 'miss' : 'none'}" x="${(i * bw + 2).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw - 4).toFixed(1)}" height="${Math.max(h, v ? 2 : 0).toFixed(1)}" rx="2"/>`; });
+    keys.forEach((k, i) => { if (i % 2 === (keys.length - 1) % 2) s += `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 12}" text-anchor="middle">${+k.slice(8)}</text>`; });
+    return s + `</svg>`;
+  }
+  function habitsCard() {
+    const g = GOALS(), today = isoDay(Date.now()), d = dayData(today);
+    const sAvg = avgOf('steps', 7), slAvg = avgOf('sleep', 7);
+    const pct = Math.min(100, Math.round((d.steps || 0) / g.steps * 100));
+    return `<section class="habits"><div class="hb-hd"><span class="lbl">Today's habits</span><button class="linkbtn" data-act="progress">See trends ›</button></div>
+      <form id="habitform" class="hb-form">
+        <label><span>Steps</span><input id="hb-steps" name="steps" type="number" inputmode="numeric" min="0" max="100000" placeholder="0" value="${d.steps || ''}"><small>goal ${g.steps.toLocaleString('en-US')}</small></label>
+        <label><span>Sleep last night</span><input id="hb-sleep" name="sleep" type="number" inputmode="decimal" step="0.25" min="0" max="16" placeholder="h" value="${d.sleep || ''}"><small>goal ${g.sleep} h</small></label>
+        <button class="btn ink" type="submit">Save</button>
+      </form>
+      <div class="hb-bar"><i style="width:${pct}%"></i></div>
+      <p class="hb-note">Copy today's steps and sleep from the Health app. 7-day average: <b>${sAvg ? Math.round(sAvg).toLocaleString('en-US') : '—'} steps</b> · <b>${slAvg ? slAvg.toFixed(1) + ' h' : '—'} sleep</b></p></section>`;
+  }
+  function habitsSection() {
+    const g = GOALS(), keys = lastDays(14);
+    const sAvg = avgOf('steps', 7), slAvg = avgOf('sleep', 7);
+    let s = `<section class="pgroup"><h3>Steps & sleep</h3>`;
+    s += `<div class="hb-row"><span class="lbl">Steps, last 14 days</span><span class="num ${sAvg && sAvg >= g.steps ? 'g' : ''}">7-day avg ${sAvg ? Math.round(sAvg).toLocaleString('en-US') : '—'} / ${g.steps.toLocaleString('en-US')}</span></div>${miniBars(keys, 'steps', g.steps)}`;
+    s += `<div class="hb-row"><span class="lbl">Sleep, last 14 nights</span><span class="num ${slAvg && slAvg >= g.sleep ? 'g' : ''}">7-day avg ${slAvg ? slAvg.toFixed(1) : '—'} / ${g.sleep} h</span></div>${miniBars(keys, 'sleep', g.sleep)}`;
+    s += `<form id="goalform" class="fields" style="margin:12px 0 12px">
+      <label>Steps goal<input id="g-steps" name="steps" type="number" inputmode="numeric" min="1000" max="40000" step="500" value="${g.steps}"></label>
+      <label>Sleep goal (h)<input id="g-sleep" name="sleep" type="number" inputmode="decimal" min="4" max="12" step="0.5" value="${g.sleep}"></label>
+      <label>Cardio heart rate from<input id="g-hrlo" name="hrLo" type="number" inputmode="numeric" min="80" max="200" value="${g.hrLo}"></label>
+      <label>to<input id="g-hrhi" name="hrHi" type="number" inputmode="numeric" min="80" max="210" value="${g.hrHi}"></label>
+      <button class="btn full" type="submit">Save goals</button></form>`;
+    return s + `</section>`;
+  }
+  function goalCard() {
+    const g = GOALS(), B = hist.body || [];
+    const last = B[B.length - 1];
+    const ago = last ? B.filter(x => x.t <= last.t - 21 * 864e5).pop() : null;
+    let wTxt = 'Log your weight weekly in Body weight below.', wCls = '';
+    if (last && ago) {
+      const perMonth = (last.kg - ago.kg) / ((last.t - ago.t) / (30 * 864e5));
+      if (perMonth > 1) { wTxt = `Rising ${fmtW(r1(perMonth))} kg/month. For losing fat while building muscle, aim to hold steady: eat a little less, keep protein high.`; wCls = 'warn'; }
+      else if (perMonth < -1.5) { wTxt = `Dropping ${fmtW(r1(-perMonth))} kg/month. A bit fast; eat a little more so you keep building muscle.`; wCls = 'warn'; }
+      else { wTxt = `Steady (${perMonth >= 0 ? '+' : ''}${fmtW(r1(perMonth))} kg/month). That's right for this goal while lifts go up.`; wCls = 'ok'; }
+    } else if (last) wTxt = `Now ${fmtW(last.kg)} kg. Keep it about steady while your lifts go up.`;
+    const protein = last ? Math.round(last.kg * 1.8 / 5) * 5 : 160;
+    const sAvg = avgOf('steps', 7), slAvg = avgOf('sleep', 7);
+    const chk = (ok, txt) => `<li class="${ok == null ? '' : ok ? 'ok' : 'warn'}"><i aria-hidden="true">${ok == null ? '•' : ok ? '✓' : '!'}</i><span>${txt}</span></li>`;
+    return `<section class="goalcard"><span class="lbl">Your goal</span><h3>Build muscle + lose fat</h3><ul>
+      <li class="${wCls}"><i aria-hidden="true">${wCls === 'ok' ? '✓' : wCls === 'warn' ? '!' : '•'}</i><span><b>Weight:</b> ${esc(wTxt)}</span></li>
+      ${chk(null, `<b>Protein:</b> about ${protein} g a day (1.8 g per kg). Chicken, eggs, fish, Greek yogurt, labneh, lentils.`)}
+      ${chk(sAvg == null ? null : sAvg >= g.steps, `<b>Steps:</b> ${sAvg ? Math.round(sAvg).toLocaleString('en-US') : 'no entries yet'} a day this week, goal ${g.steps.toLocaleString('en-US')}. A 20-minute walk after dinner adds about 2,000.`)}
+      ${chk(slAvg == null ? null : slAvg >= g.sleep, `<b>Sleep:</b> ${slAvg ? slAvg.toFixed(1) + ' h' : 'no entries yet'} a night this week, goal ${g.sleep} h. More sleep is the fastest way to recover between sessions.`)}
+      ${chk(null, `<b>Cardio:</b> Saturday at an easy pace, heart rate ${g.hrLo}–${g.hrHi}. Stay easy until a doctor has checked the chest tightness.`)}
+      </ul></section>`;
+  }
+
   function allIds() { return [...new Set([...DAYS.flatMap(d => listFor(d.id)), ...listFor('finisher')])]; }
   function weeklyRecap(wkStart) {
     const lastWk = addDays(wkStart, -7);
@@ -1878,7 +1968,7 @@ const ANIM3D = {
     const S = hist.sessions;
     s += `<section class="intro"><h1 class="disp" style="font-size:44px">Progress</h1><p>Your weekly recap, records, body weight and every exercise.</p></section>`;
     s += `<div class="stats"><div><b class="num">${S.filter(x => x.t >= wkStart).length}</b><span>This week</span></div><div><b class="num">${S.filter(x => x.t >= moStart).length}</b><span>This month</span></div><div><b class="num">${S.length}</b><span>All time</span></div></div>`;
-    s += weeklyRecap(wkStart) + bodySection() + recordsSection();
+    s += goalCard() + weeklyRecap(wkStart) + habitsSection() + bodySection() + recordsSection();
     const group = (title, color, ids) => {
       let g = `<section class="pgroup d-${color}"><h3><i></i>${esc(title)}</h3>`;
       ids.forEach(id => {
@@ -2362,6 +2452,21 @@ const ANIM3D = {
   });
   document.addEventListener('submit', ev => {
     if (ev.target.id === 'addform') { ev.preventDefault(); addExercise(ev.target); }
+    if (ev.target.id === 'habitform') {
+      ev.preventDefault(); const f = ev.target.elements;
+      const st = parseInt(f.steps.value, 10), sl = parseFloat(f.sleep.value);
+      const k = isoDay(Date.now()); const cur = Object.assign({}, dayData(k));
+      if (!isNaN(st) && st >= 0 && st <= 100000) cur.steps = st;
+      if (!isNaN(sl) && sl >= 0 && sl <= 16) cur.sleep = r1(sl);
+      hist.daily = Object.assign({}, hist.daily || {}, { [k]: cur }); saveHist(); render(); toast('Saved'); return;
+    }
+    if (ev.target.id === 'goalform') {
+      ev.preventDefault(); const f = ev.target.elements; const g = GOALS();
+      const num = (v, lo, hi, d) => { const x = parseFloat(v); return isNaN(x) || x < lo || x > hi ? d : x; };
+      const lo = num(f.hrLo.value, 80, 200, g.hrLo), hi = num(f.hrHi.value, 80, 210, g.hrHi);
+      prefs.goals = Object.assign({}, prefs.goals || {}, { steps: Math.round(num(f.steps.value, 1000, 40000, g.steps)), sleep: num(f.sleep.value, 4, 12, g.sleep), hrLo: Math.min(lo, hi), hrHi: Math.max(lo, hi), aim: 'recomp' });
+      savePrefs(); render(); toast('Goals saved'); return;
+    }
     if (ev.target.id === 'htform') {
       ev.preventDefault(); const v = parseInt(ev.target.elements.cm.value, 10);
       if (isNaN(v) || v < 120 || v > 230) { toast('Enter your height in cm, like 190'); return; }
