@@ -1,5 +1,5 @@
 // Iron Week offline cache. Bump VERSION on every release so phones pick up the new app.
-const VERSION = 'ironweek-v2';
+const VERSION = 'ironweek-v3';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

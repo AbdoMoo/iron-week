@@ -395,6 +395,13 @@ label.btn{cursor:pointer}
 .goalcard li.ok i{background:var(--good-bg);color:var(--good)}
 .goalcard li.warn i{background:color-mix(in srgb,var(--yellow) 25%,var(--surface));color:var(--ink)}
 .hrzone{display:block;margin-top:4px;font-weight:700;color:var(--red)}
+.hb-import{margin-top:10px;color:var(--red);font-weight:700}
+.pastebox{display:grid;gap:4px;margin-top:14px}
+.pastebox textarea{font:inherit;font-size:17px;color:var(--ink);background:var(--surface2);border:2px dashed var(--line);border-radius:12px;padding:12px;width:100%;min-width:0;resize:none}
+.howto{margin-top:14px;background:var(--surface2);border-radius:12px;padding:10px 12px}
+.howto summary{font-weight:700;cursor:pointer}
+.howto ol{margin:10px 0 0;padding-left:20px;display:grid;gap:6px;font-size:14px}
+.howto code{font-size:13px;background:var(--surface);padding:1px 4px;border-radius:4px;word-break:break-word}
 .editbtn{font-weight:700;font-size:14px;min-height:36px;padding:0 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .elist{display:grid;gap:8px}
 .erow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
@@ -1492,7 +1499,7 @@ const ANIM3D = {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && hasProgress()) keepAwake(); });
 
   // ---------- UI state ----------
-  const ui = { setEdit: null, edit: null, addTo: null, confirmRm: null, dayLog: null, confirmDel: null, view: 'home', day: null, sheet: null, summary: null, confirmDiscard: false, confirmFinish: false, slow: false, navigated: false };
+  const ui = { health: null, setEdit: null, edit: null, addTo: null, confirmRm: null, dayLog: null, confirmDel: null, view: 'home', day: null, sheet: null, summary: null, confirmDiscard: false, confirmFinish: false, slow: false, navigated: false };
   const ICON = {
     back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
     close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -1856,9 +1863,60 @@ const ANIM3D = {
         <label><span>Sleep last night</span><input id="hb-sleep" name="sleep" type="number" inputmode="decimal" step="0.25" min="0" max="16" placeholder="h" value="${d.sleep || ''}"><small>goal ${g.sleep} h</small></label>
         <button class="btn ink" type="submit">Save</button>
       </form>
+      <button class="btn wide hb-import" data-act="health-open">♥ Import from Health</button>
       <div class="hb-bar"><i style="width:${pct}%"></i></div>
       <p class="hb-note">Copy today's steps and sleep from the Health app. 7-day average: <b>${sAvg ? Math.round(sAvg).toLocaleString('en-US') : '—'} steps</b> · <b>${slAvg ? slAvg.toFixed(1) + ' h' : '—'} sleep</b></p></section>`;
   }
+  // ---------- Health import (via iPhone Shortcut + paste) ----------
+  const SHORTCUT_NAME = 'Iron Week Health';
+  function parseHealth(text) {
+    const t = String(text || '').replace(/,(?=\d{3}\b)/g, '');
+    const grab = re => { const m = t.match(re); return m ? parseFloat(m[1]) : null; };
+    let steps = grab(/steps?\s*[=:]\s*([\d.]+)/i), sleep = grab(/sleep\s*[=:]\s*([\d.]+)/i), kg = grab(/(?:kg|weight)\s*[=:]\s*([\d.]+)/i);
+    if (sleep != null && sleep > 24) sleep = sleep / 60;
+    if (steps != null && (steps < 0 || steps > 100000)) steps = null;
+    if (sleep != null && (sleep <= 0 || sleep > 16)) sleep = null;
+    if (kg != null && (kg < 20 || kg > 400)) kg = null;
+    return { steps: steps == null ? null : Math.round(steps), sleep: sleep == null ? null : Math.round(sleep * 4) / 4, kg: kg == null ? null : r1(kg) };
+  }
+  function applyHealth(p) {
+    const k = isoDay(Date.now()); const cur = Object.assign({}, dayData(k)); const got = [];
+    if (p.steps != null) { cur.steps = p.steps; got.push(p.steps.toLocaleString('en-US') + ' steps'); }
+    if (p.sleep != null) { cur.sleep = p.sleep; got.push(p.sleep + ' h sleep'); }
+    if (p.steps != null || p.sleep != null) hist.daily = Object.assign({}, hist.daily || {}, { [k]: cur });
+    if (p.kg != null) {
+      const today = dayStart(Date.now());
+      hist.body = (hist.body || []).filter(x => dayStart(x.t) !== today); hist.body.push({ t: Date.now(), kg: p.kg }); got.push(fmtW(p.kg) + ' kg');
+    }
+    if (!got.length) return false;
+    saveHist(); ui.health = null; renderLayer(); render(); toast('Imported: ' + got.join(' · ')); return true;
+  }
+  function healthHTML() {
+    const inClaude = !!window.claude;
+    return `<div class="overlay" data-act="close-bg"><div class="sheet d-green" role="dialog" aria-modal="true" aria-label="Import from Health"><div class="grab"></div>
+      <div class="hd"><div class="grow"><div class="lbl">Apple Health</div><h2>Import from Health</h2></div><button class="iconbtn" data-act="close" aria-label="Close">${ICON.close}</button></div>
+      <ol class="cues" style="margin-top:12px">
+        <li>${inClaude ? `Run the <b>${SHORTCUT_NAME}</b> shortcut (from the Shortcuts app, a widget or Siri).` : `Tap <b>Run Health shortcut</b>. It copies today's steps, last night's sleep and your weight.`}</li>
+        <li>Come back here, tap the box below and choose <b>Paste</b>.</li>
+      </ol>
+      ${inClaude ? '' : `<a class="btn primary wide" style="margin-top:12px" href="shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT_NAME)}">▶ Run Health shortcut</a>`}
+      <label class="pastebox"><span class="lbl">Paste here</span><textarea id="health-paste" rows="2" placeholder="Tap, then Paste" autocomplete="off" autocapitalize="off"></textarea></label>
+      <p id="health-msg" class="muted" style="margin:6px 0 0;font-size:13px">It fills in steps and sleep for today and adds your weight to Body weight.</p>
+      <details class="howto"><summary>First time? Set up the shortcut (5 minutes)</summary>
+        <ol>
+          <li>Open the <b>Shortcuts</b> app, tap <b>+</b>, name it <b>${SHORTCUT_NAME}</b>.</li>
+          <li><b>Steps:</b> add <i>Find Health Samples</i>: Type is <i>Steps</i>, Start Date is <i>Today</i>. Then add <i>Calculate Statistics</i>: <i>Sum</i>.</li>
+          <li><b>Sleep:</b> add <i>Find Health Samples</i>: Type is <i>Sleep Analysis</i>, Start Date is in the last <i>1 day</i>, Value is not <i>In Bed</i>, Value is not <i>Awake</i>, Source is your <i>Apple Watch</i> (pick one device so sleep isn't counted twice). Then <i>Repeat with Each</i>: <i>Get Time Between Dates</i> from <i>Start Date</i> to <i>End Date</i> in <i>Minutes</i>. After the repeat: <i>Calculate Statistics</i>: <i>Sum</i> of <i>Repeat Results</i>.</li>
+          <li><b>Weight:</b> add <i>Find Health Samples</i>: Type is <i>Weight</i>, Sort by <i>Start Date</i>, Latest First, Limit <i>1</i>.</li>
+          <li>Add a <i>Text</i> action: <code>IW steps=[Steps sum] sleep=[Sleep minutes sum] kg=[Weight]</code> (tap each variable to insert it).</li>
+          <li>Add <i>Copy to Clipboard</i>, then <i>Show Notification</i>: "Copied. Paste it in Iron Week."</li>
+          <li>Optional: Automation tab → <b>Time of Day</b> 9:00 PM daily → <b>Run Immediately</b> → this shortcut.</li>
+        </ol>
+        <p class="muted" style="font-size:13px;margin:6px 0 0">Sleep in minutes is fine; the app converts it to hours.</p>
+      </details>
+      <div style="margin-top:14px"><button class="btn ink wide" data-act="close">Close</button></div></div></div>`;
+  }
+
   function habitsSection() {
     const g = GOALS(), keys = lastDays(14);
     const sAvg = avgOf('steps', 7), slAvg = avgOf('sleep', 7);
@@ -2020,6 +2078,7 @@ const ANIM3D = {
     if (ui.dayLog != null) return dayLogHTML();
     if (ui.addTo) return addHTML();
     if (ui.setEdit) return setEditHTML();
+    if (ui.health) return healthHTML();
     const id = ui.sheet; const c = cfg(id), e = c.e, p = prefs.ex[id] || {};
     const opts = (arr, cur, fmt = x => x) => arr.map(v => `<option value="${v}"${Number(cur) === v ? ' selected' : ''}>${fmt(v)}</option>`).join('');
     let s = `<div class="overlay" data-act="close-bg"><div class="sheet d-${colorOf(id)}" role="dialog" aria-modal="true" aria-label="${esc(c.name)}">
@@ -2246,7 +2305,7 @@ const ANIM3D = {
   function renderLayer() {
     const L = $('#layer');
     if (player) L.innerHTML = playerHTML();
-    else if (ui.sheet || ui.summary || ui.dayLog != null || ui.addTo || ui.setEdit) L.innerHTML = sheetHTML();
+    else if (ui.sheet || ui.summary || ui.dayLog != null || ui.addTo || ui.setEdit || ui.health) L.innerHTML = sheetHTML();
     else L.innerHTML = '';
     document.documentElement.style.overflow = L.innerHTML ? 'hidden' : '';
     collectAnims();
@@ -2343,7 +2402,7 @@ const ANIM3D = {
   document.addEventListener('click', ev => {
     const b = ev.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act, id = b.dataset.id;
-    if (act === 'close-bg') { if (ev.target !== b) return; ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.addTo = null; ui.confirmRm = null; renderLayer(); render(); return; }
+    if (act === 'close-bg') { if (ev.target !== b) return; ui.health = null; ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.addTo = null; ui.confirmRm = null; renderLayer(); render(); return; }
     switch (act) {
       case 'home': ui.view = 'home'; ui.navigated = true; render(); window.scrollTo(0, 0); break;
       case 'calendar': ui.view = 'calendar'; ui.navigated = true; ui.calMonth = null; ui.sheet = null; ui.dayLog = null; renderLayer(); render(); window.scrollTo(0, 0); break;
@@ -2437,7 +2496,8 @@ const ANIM3D = {
       case 'sheet': ui.sheet = id; renderLayer(); break;
       case 'backup': doBackup(); break;
       case 'slow': ui.slow = !ui.slow; renderLayer(); break;
-      case 'close': ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.confirmDel = null; ui.addTo = null; ui.confirmRm = null; renderLayer(); render(); break;
+      case 'health-open': ui.health = true; renderLayer(); break;
+      case 'close': ui.health = null; ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.confirmDel = null; ui.addTo = null; ui.confirmRm = null; renderLayer(); render(); break;
       case 'daylog': ui.dayLog = +b.dataset.date; ui.confirmDel = null; renderLayer(); break;
       case 'del-entry': deleteEntry(id, +b.dataset.t, b.dataset.v); toast('Removed'); renderLayer(); render(); break;
       case 'del-session': ui.confirmDel = +b.dataset.t; renderLayer(); break;
@@ -2450,6 +2510,15 @@ const ANIM3D = {
       case 'warm-prev': advance(-1); break;
     }
   });
+  function onHealthText(text) {
+    const p = parseHealth(text); const msg = $('#health-msg');
+    if (!applyHealth(p) && msg) { msg.textContent = 'Couldn\'t find steps, sleep or weight in that text. It should look like: IW steps=5200 sleep=410 kg=88.5'; msg.style.color = 'var(--red)'; }
+  }
+  document.addEventListener('paste', ev => {
+    if (!ev.target || ev.target.id !== 'health-paste') return;
+    const text = (ev.clipboardData || window.clipboardData).getData('text'); ev.preventDefault(); onHealthText(text);
+  });
+  document.addEventListener('input', ev => { if (ev.target && ev.target.id === 'health-paste' && /\d/.test(ev.target.value) && /=|:/.test(ev.target.value)) setTimeout(() => { const el = $('#health-paste'); if (el) onHealthText(el.value); }, 400); });
   document.addEventListener('submit', ev => {
     if (ev.target.id === 'addform') { ev.preventDefault(); addExercise(ev.target); }
     if (ev.target.id === 'habitform') {
@@ -2502,7 +2571,7 @@ const ANIM3D = {
     else setPref(id, { [f]: +el.value });
     render(); toast('Saved');
   });
-  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && (ui.sheet || ui.summary || ui.dayLog != null || ui.addTo || ui.setEdit)) { ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.addTo = null; renderLayer(); render(); } });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && (ui.sheet || ui.summary || ui.dayLog != null || ui.addTo || ui.setEdit || ui.health)) { ui.health = null; ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.addTo = null; renderLayer(); render(); } });
 
   setInterval(() => {
     tickBar(); playerTick();
