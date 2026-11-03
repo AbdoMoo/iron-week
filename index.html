@@ -402,6 +402,11 @@ label.btn{cursor:pointer}
 .howto summary{font-weight:700;cursor:pointer}
 .howto ol{margin:10px 0 0;padding-left:20px;display:grid;gap:6px;font-size:14px}
 .howto code{font-size:13px;background:var(--surface);padding:1px 4px;border-radius:4px;word-break:break-word}
+.progsw{display:grid;gap:6px;margin:0 0 12px}
+.progsw .seg{display:grid;grid-template-columns:1fr 1fr;margin-top:0;width:100%}
+.progsw .seg button{white-space:normal;line-height:1.2;padding:6px 8px;min-height:40px}
+.sspill{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--day) 18%,transparent);color:var(--ink)}
+.sspill.sug{background:var(--surface2);color:var(--ink2);margin-left:0}
 .editbtn{font-weight:700;font-size:14px;min-height:36px;padding:0 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .elist{display:grid;gap:8px}
 .erow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
@@ -964,6 +969,24 @@ label.btn{cursor:pointer}
   setV(['kneeRaise'], ['Knees up', 'Lower slowly']);
   setV(['lyingLegRaise'], ['Legs up', 'Lower slowly']);
 
+  // PUSH / PULL / LEGS / UPPER program
+  // Romanian deadlift: start at the bottom (hinged) so the fast phase is standing up
+  A.rdl = { a: { hx: 82, hy: 88, t: 108, foot: [103, 155], ua: 0, fa: 0, hd: -20 }, b: { hx: 98, hy: 83, t: 180, foot: [101, 155], ua: 2, fa: 2 }, props: [{ t: 'db' }] };
+  A.smithRdl = { a: A.rdl.a, b: A.rdl.b, props: [{ t: 'rail', x1: 124, y1: 14, x2: 124, y2: GY, cls: 'guide' }, { t: 'rail', x1: 70, y1: 14, x2: 70, y2: GY, cls: 'guide' }, { t: 'plate', r: 10 }] };
+  const IS = { hx: 112, hy: 120, t: 235, foot: [146, 155] };
+  A.inclineSmith = { a: P(IS, { hand: [80, 84] }), b: P(IS, { hand: [80, 47] }),
+    props: [{ t: 'backpad', off: 8, from: -10, to: 16, post: true }, { t: 'rail', x1: 80, y1: 12, x2: 80, y2: GY, cls: 'guide' }, { t: 'plate', r: 10 }] };
+  A.inclineCurl = { a: P(IS, { ua: -8, fa: -6 }), b: P(IS, { ua: -6, fa: 150 }), props: [{ t: 'backpad', off: 8, from: -10, to: 16, post: true }, { t: 'db' }] };
+  const RF = { hx: 92, hy: 92, t: 118, foot: [104, 155], hd: -15 };
+  A.dbRearFly = { a: P(RF, { ua: 6, fa: 14 }), b: P(RF, { ua: -78, fa: -72 }), props: [{ t: 'db' }] };
+  A.dbLateral = { a: P(FRONT_STAND, { ER: [18, 25], WR: [20, 48] }), b: P(FRONT_STAND, { ER: [41, 1], WR: [63, -2] }), props: [{ t: 'db', both: true }] };
+  Object.assign(MUS, { rdl: ['hams', 'glutes', 'lowback'], smithRdl: ['hams', 'glutes', 'lowback'], inclineSmith: ['chest', 'frontdelt'], inclineCurl: ['biceps'], dbRearFly: ['reardelt', 'traps'], dbLateral: ['shoulders'] });
+  setV(['rdl', 'smithRdl'], ['Stand up tall', 'Hinge down slowly']);
+  setV(['inclineSmith'], ['Press', 'Lower slowly']);
+  setV(['inclineCurl'], ['Curl up', 'Lower slowly']);
+  setV(['dbRearFly'], ['Open wide', 'Lower slowly']);
+  setV(['dbLateral'], ['Raise', 'Lower slowly']);
+
   // ---------- engine ----------
   function yoyo(ph) {
     if (ph < 0.36) return ease(ph / 0.36);
@@ -1211,6 +1234,96 @@ const ANIM3D = {
   k4: ['captains-chair-leg-raise', 'kneeling-cable-crunch'], k5: ['bicycle-crunch', 'seated-ab-crunch-machine'], k6: ['push-up', 'lying-chest-press-machine'], k7: ['plank', 'side-plank'],
 };
 
+/* Program 2: Push / Pull / Legs / Upper (4 days). `link` starts an exercise at the weight already used
+   for the same movement in the classic program ('id' = main version, 'id:a' = alternative). `rr` = rep range.
+   `sug` = no history yet, the weight is a suggested light start. */
+const PPL = [
+  { id: 'push', name: 'Push', tag: 'PU', color: 'red', warm: 'upper', prog: 'ppl', ex: [
+    { id: 'p1', name: 'Incline Dumbbell Press', link: 'c2:a', w: 20, each: true, step: 2, sets: 3, rr: [6, 8], rest: 120, anim: 'inclineDB', free: true,
+      cues: ['Bench at 30–45°, dumbbells at the sides of the upper chest.', 'Press up and slightly together until the arms are straight.', 'Lower for 2–3 seconds. Go up in weight when you hit 8 reps on every set.'],
+      alt: { name: 'Incline Press Machine (45°)', link: 'c2', w: 25, each: true, anim: 'inclineMachine', cues: ['Seat low enough that the handles start at the upper chest.', 'Press up and slightly forward.', 'Lower until you feel a stretch in the upper chest.'] } },
+    { id: 'p2', name: 'Machine Chest Press', link: 'c3', w: 45, sets: 3, rr: [8, 10], rest: 120, anim: 'chestPress',
+      cues: ['Sit tall, handles at mid-chest height.', 'Push straight forward without locking the elbows.', 'Bring them back slowly until you feel the chest stretch.'],
+      alt: { name: 'Cable Chest Press', anim: 'cableChestPress', cues: ['Split stance, handles at chest height.', 'Press forward and slightly together.', 'Keep the ribs down and the back still.'] } },
+    { id: 'p3', name: 'Shoulder Press Machine', link: 's1', w: 27, sets: 2, rr: [8, 10], rest: 120, anim: 'shoulderPress',
+      cues: ['Handles start at shoulder height, back on the pad.', 'Press overhead without slamming into lockout.', 'Lower under control to shoulder height.'],
+      alt: { name: 'Smith Machine Shoulder Press', link: 's1:a', anim: 'smithShoulder', cues: ['Bench upright, bar just in front of the face.', 'Press straight up.', 'Lower to chin height.'] } },
+    { id: 'p4', name: 'Lateral Raise Machine', link: 's3', w: 41, sets: 3, rr: [10, 15], rest: 60, anim: 'lateralMachine',
+      cues: ['Pads on the outside of the upper arms.', 'Lift the elbows out to shoulder height.', 'Lower slowly; no swinging.'],
+      alt: { name: 'Dumbbell Lateral Raise', w: 8, each: true, step: 1, sug: true, anim: 'dbLateral', free: true, cues: ['Slight bend in the elbows, lead with the elbows.', 'Raise out to shoulder height, no higher.', 'Lower for 2–3 seconds.'] } },
+    { id: 'p5', name: 'Overhead Rope Extension', link: 'c7', w: 15.8, sets: 2, rr: [10, 15], rest: 60, note: 'Cable at level 13', anim: 'overheadRope',
+      cues: ['Face away from the stack, rope behind your head.', 'Elbows point forward; extend the arms fully.', 'Bend back until you feel the stretch.'],
+      alt: { name: 'Overhead Triceps Machine', anim: 'overheadMachine', cues: ['Elbows on the pad, close to your head.', 'Extend until the arms are straight.', 'Lower slowly behind your head.'] } },
+    { id: 'p6', name: 'Triceps Rope Pushdown', link: 'c5', w: 24.8, sets: 2, rr: [12, 15], rest: 60, anim: 'ropePushdown',
+      cues: ['Elbows pinned to your sides.', 'Push down and spread the rope at the bottom.', 'Let the forearms rise to just above parallel.'],
+      alt: { name: 'Straight-Bar Pushdown', link: 'c5:a', anim: 'barPushdown', cues: ['Overhand grip, shoulder-width.', 'Push the bar down to your thighs, elbows still.', 'Control it back up to chest height.'] } },
+  ] },
+  { id: 'pull', name: 'Pull', tag: 'PL', color: 'blue', warm: 'upper', prog: 'ppl', skipFin: ['f1'], ex: [
+    { id: 'q1', name: 'Assisted Pull-Up Machine', link: 'f1', w: 18, assist: true, sets: 2, rr: [6, 10], rest: 120, anim: 'assistedPullup',
+      cues: ['Knees on the pad, grip wider than the shoulders.', 'Pull until the chin is over the bar.', 'Lower all the way. Less weight = less help.'],
+      alt: { name: 'Assisted Chin-Up Machine', link: 'f1:a', assist: true, anim: 'assistedPullup', cues: ['Same machine, underhand grip, hands shoulder-width.', 'Pull the chest toward the bar.', 'Lower slowly to straight arms.'] } },
+    { id: 'q2', name: 'Lat Pulldown', link: 'b2', w: 45, sets: 3, rr: [6, 10], rest: 120, anim: 'latPulldown',
+      cues: ['Grip just wider than the shoulders, thighs under the pad.', 'Pull the bar to the upper chest, elbows down.', 'Let the arms extend fully at the top.'],
+      alt: { name: 'Close-Grip Pulldown', link: 'b2:a', anim: 'closePulldown', cues: ['V-handle, palms facing each other.', 'Pull to the upper chest, lean back slightly.', 'Stretch all the way up between reps.'] } },
+    { id: 'q3', name: 'Chest-Supported Row', link: 'b1', w: 52, sets: 3, rr: [8, 10], rest: 120, anim: 'lowRow',
+      cues: ['Chest against the pad, arms long.', 'Pull the handles toward your stomach, elbows close.', 'Squeeze the back for a second, then reach forward slowly.'],
+      alt: { name: 'T-Bar Row Machine', link: 'b4', anim: 'tbarRow', cues: ['Chest on the pad, knees soft.', 'Pull to the lower chest, elbows close.', 'Lower until the arms are straight.'] } },
+    { id: 'q4', name: 'Dumbbell Rear Delt Fly', w: 8, each: true, step: 1, sug: true, sets: 3, rr: [10, 15], rest: 60, anim: 'dbRearFly', free: true,
+      cues: ['Hinge forward, flat back, dumbbells hanging under the chest.', 'Raise the arms out wide, slight bend in the elbows.', 'Squeeze the rear shoulders, lower slowly.'],
+      alt: { name: 'Reverse Fly Machine', link: 's4', anim: 'reverseFly', cues: ['Face the pad, handles at shoulder height.', 'Open the arms wide, squeeze the rear shoulders.', 'Return slowly without letting the stack touch.'] } },
+    { id: 'q5', name: 'Incline Dumbbell Curl', w: 12, each: true, step: 2, sets: 3, rr: [10, 15], rest: 60, anim: 'inclineCurl', free: true,
+      cues: ['Bench at about 45°, arms hanging straight down.', 'Curl up without moving the elbows forward.', 'Lower all the way for the full stretch.'],
+      alt: { name: 'Biceps Curl Machine', link: 'b6', anim: 'curlMachine', cues: ['Arms flat on the pad, elbows lined up with the pivot.', 'Curl all the way up and squeeze.', 'Lower all the way for a full stretch.'] } },
+  ] },
+  { id: 'pl_legs', name: 'Legs', tag: 'LG', color: 'green', warm: 'lower', prog: 'ppl', ex: [
+    { id: 'r1', name: 'Lying Hamstring Curl', link: 'l2', w: 45, sets: 3, rr: [12, 15], rest: 75, anim: 'lyingLegCurl',
+      cues: ['Pad just above the heels, hips down on the bench.', 'Curl the heels toward your glutes.', 'Lower slowly to almost straight.'],
+      alt: { name: 'Seated Leg Curl', link: 'l2:a', anim: 'seatedLegCurl', cues: ['Thigh pad snug, knees at the pivot.', 'Curl the heels down and under.', 'Return slowly.'] } },
+    { id: 'r2', name: 'Leg Extension', link: 'l1', w: 52, sets: 3, rr: [12, 15], rest: 75, anim: 'legExtension',
+      cues: ['Knees lined up with the machine pivot.', 'Kick up until the legs are straight, squeeze.', 'Lower slowly.'],
+      alt: { name: 'Single-Leg Extension', link: 'l1:a', anim: 'singleLegExt', cues: ['Same machine, one leg at a time.', 'Use about half the weight.', 'Do all reps, then switch legs.'] } },
+    { id: 'r3', name: 'Leg Press', link: 'l4', w: 50, each: true, sets: 3, rr: [6, 10], rest: 150, anim: 'legPress',
+      cues: ['Feet shoulder-width in the middle of the platform.', 'Lower until the knees reach about 90°.', 'Press up without locking the knees.'],
+      alt: { name: 'Narrow-Stance Leg Press', link: 'l4:a', anim: 'legPress', cues: ['Feet close together in the middle of the platform.', 'Lower until the knees reach about 90°.', 'Press up without locking the knees.'] } },
+    { id: 'r4', name: 'Dumbbell Romanian Deadlift', w: 20, each: true, step: 2, sug: true, sets: 3, rr: [8, 10], rest: 120, anim: 'rdl', free: true,
+      cues: ['Stand tall, dumbbells in front of the thighs, knees soft.', 'Push the hips back and slide the weights down the legs, back flat.', 'Stop at a strong hamstring stretch (about mid-shin), then stand up squeezing the glutes.'],
+      alt: { name: 'Smith Machine Romanian Deadlift', w: 40, sug: true, anim: 'smithRdl', cues: ['Bar at hip height, overhand grip.', 'Hips back, bar close to the legs, back flat.', 'Stand up by driving the hips forward.'] } },
+  ] },
+  { id: 'upper', name: 'Upper', tag: 'UP', color: 'yellow', warm: 'upper', prog: 'ppl', ex: [
+    { id: 'u1', name: 'Incline Smith Machine Press', w: 50, sug: true, sets: 3, rr: [6, 10], rest: 120, anim: 'inclineSmith',
+      cues: ['Bench at 30–45°, bar over the upper chest.', 'Unrack, lower to touch the upper chest.', 'Press straight up, wrists over elbows.'],
+      alt: { name: 'Incline Press Machine (45°)', link: 'c2', w: 25, each: true, anim: 'inclineMachine', cues: ['Seat low enough that the handles start at the upper chest.', 'Press up and slightly forward.', 'Lower until you feel a stretch in the upper chest.'] } },
+    { id: 'u2', name: 'Lat Pulldown', link: 'b2', w: 45, sets: 3, rr: [8, 10], rest: 120, anim: 'latPulldown',
+      cues: ['Grip just wider than the shoulders, thighs under the pad.', 'Pull the bar to the upper chest, elbows down.', 'Let the arms extend fully at the top.'],
+      alt: { name: 'Close-Grip Pulldown', link: 'b2:a', anim: 'closePulldown', cues: ['V-handle, palms facing each other.', 'Pull to the upper chest, lean back slightly.', 'Stretch all the way up between reps.'] } },
+    { id: 'u3', name: 'Pec Deck Fly', link: 'c4', w: 66, sets: 2, rr: [10, 15], rest: 60, anim: 'pecFly',
+      cues: ['Handles at chest height, slight bend in the elbows.', 'Bring the hands together in a hugging arc.', 'Open slowly until you feel a stretch.'],
+      alt: { name: 'Cable Crossover', link: 'c4:a', anim: 'cableCrossover', cues: ['Pulleys set high, one step forward.', 'Sweep the hands down and together.', 'Keep the elbow angle the same the whole time.'] } },
+    { id: 'u4', name: 'Dumbbell Lateral Raise', w: 8, each: true, step: 1, sug: true, sets: 3, rr: [10, 12], rest: 60, anim: 'dbLateral', free: true,
+      cues: ['Slight bend in the elbows, lead with the elbows.', 'Raise out to shoulder height, no higher.', 'Lower for 2–3 seconds.'],
+      alt: { name: 'Lateral Raise Machine', link: 's3', anim: 'lateralMachine', cues: ['Pads on the outside of the upper arms.', 'Lift the elbows out to shoulder height.', 'Lower slowly.'] } },
+    { id: 'u5', name: 'Cable Curl', link: 'b8', w: 20, sets: 3, rr: [12, 15], rest: 0, ss: 'A1', anim: 'cableEZ',
+      cues: ['Straight bar on the low pulley, underhand grip.', 'Curl to the chest, elbows by your sides.', 'Superset: go straight to the pushdown, then rest.'],
+      alt: { name: 'Biceps Curl Machine', link: 'b6', anim: 'curlMachine', cues: ['Arms flat on the pad.', 'Curl up and squeeze.', 'Then go straight to the pushdown.'] } },
+    { id: 'u6', name: 'Straight-Bar Pushdown', link: 'c5', w: 24.8, sets: 3, rr: [12, 15], rest: 75, ss: 'A2', anim: 'barPushdown',
+      cues: ['Overhand grip, elbows pinned to your sides.', 'Push the bar down to your thighs.', 'Rest after this, then start the next curl set.'],
+      alt: { name: 'Triceps Rope Pushdown', link: 'c5', anim: 'ropePushdown', cues: ['Elbows pinned to your sides.', 'Push down and spread the rope at the bottom.', 'Rest after this, then start the next curl set.'] } },
+  ] },
+];
+DAYS.forEach(d => { if (!d.prog) d.prog = d.cardio ? 'both' : 'classic'; });
+DAYS.splice(DAYS.findIndex(d => d.cardio), 0, ...PPL);
+const PROGRAMS = { classic: { name: 'Classic split', short: 'Classic' }, ppl: { name: 'Push · Pull · Legs · Upper', short: 'PPL + Upper' } };
+const DAY_EQUIV = { legs: 'pl_legs', pl_legs: 'legs' };
+Object.assign(ANIM3D, {
+  p1: ['incline-dumbbell-press', 'lever-incline-chest-press'], p2: [null, 'one-arm-cable-chest-press'], p3: ['lever-shoulder-press', 'smith-machine-shoulder-press'],
+  p4: ['lateral-raise-machine', 'dumbbell-lateral-raise'], p5: ['cable-rope-overhead-triceps-extension', 'triceps-extension-machine'], p6: ['rope-pushdown', 'push-down'],
+  q1: ['assisted-pull-up', 'chin-up'], q2: ['lat-pulldown', 'v-bar-lat-pulldown'], q3: ['seated-row-machine', 'lever-t-bar-row'], q4: ['bent-over-lateral-raise', 'rear-delt-machine-fly'],
+  q5: ['seated-incline-dumbbell-curl', 'lever-biceps-curl'],
+  r1: ['leg-curl', 'seated-leg-curl'], r2: ['leg-extension', 'single-leg-extension'], r3: ['leg-press', 'leg-press'], r4: ['dumbbell-romanian-deadlift', null],
+  u1: ['smith-machine-incline-bench-press', 'lever-incline-chest-press'], u2: ['lat-pulldown', 'v-bar-lat-pulldown'], u3: ['pec-deck-fly', 'cable-crossover'],
+  u4: ['dumbbell-lateral-raise', 'lateral-raise-machine'], u5: [null, 'lever-biceps-curl'], u6: ['push-down', 'rope-pushdown'],
+});
+
 (function () {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -1228,6 +1341,8 @@ const ANIM3D = {
   const ANIM_LABEL = {};
   [...DAYS.flatMap(d => d.ex), ...FINISHER].forEach(e => { if (!ANIM_LABEL[e.anim]) ANIM_LABEL[e.anim] = e.name; if (e.alt && !ANIM_LABEL[e.alt.anim]) ANIM_LABEL[e.alt.anim] = e.alt.name; });
   Object.values(WARMUPS).flat().forEach(w => { if (!ANIM_LABEL[w.anim]) ANIM_LABEL[w.anim] = w.name; });
+  const progOf = () => (prefs.program && PROGRAMS[prefs.program] ? prefs.program : 'classic');
+  const progDays = () => DAYS.filter(d => d.prog === 'both' || d.prog === progOf());
   const GENERIC_CUES = ['Set the seat or start position for your height.', 'Move under control through the full range.', 'Breathe out on the hard part, return slowly.'];
   const MUSCLE = { chest: 'Chest', triceps: 'Triceps', frontdelt: 'Front shoulders', shoulders: 'Shoulders', reardelt: 'Rear shoulders', back: 'Back', lowback: 'Lower back', traps: 'Traps', biceps: 'Biceps', quads: 'Quads', hams: 'Hamstrings', glutes: 'Glutes', calves: 'Calves', abs: 'Abs' };
   const kindOf = x => (x.mins ? 'time' : x.hold ? 'hold' : x.type === 'reps' ? 'reps' : 'kg');
@@ -1395,6 +1510,11 @@ const ANIM3D = {
   function keyOfEx(id) { const k = [...DAYS.map(d => d.id), 'finisher'].find(k => listFor(k).includes(id)); return k || null; }
 
   // ---------- config ----------
+  function linkW(link) {
+    if (!link) return null;
+    const [lid, v] = link.split(':'); const le = ALL[lid]; if (!le) return null; const lp = prefs.ex[lid] || {};
+    return v === 'a' ? (lp.aw ?? (le.alt && le.alt.w) ?? null) : (lp.w ?? le.w ?? null);
+  }
   function cfg(id) {
     const e = getEx(id), p = prefs.ex[id] || {}, a = e.alt || {};
     const alt = !!p.alt && !!e.alt; const x = alt ? a : e;
@@ -1404,10 +1524,12 @@ const ANIM3D = {
       name: alt ? (p.aname || a.name) : (p.name || e.name),
       anim: (alt ? p.aanim : p.anim) || x.anim, cues: x.cues || GENERIC_CUES,
       sets: p.sets ?? e.sets ?? 3,
-      reps: alt ? (p.areps ?? a.reps ?? p.reps ?? e.reps ?? 12) : (p.reps ?? e.reps ?? 12),
+      reps: alt ? (p.areps ?? a.reps ?? p.reps ?? e.reps ?? (e.rr ? e.rr[1] : 12)) : (p.reps ?? e.reps ?? (e.rr ? e.rr[1] : 12)),
+      rr: (alt ? p.areps : p.reps) != null ? null : (x.rr || e.rr || null),
+      sug: !!x.sug && (alt ? p.aw : p.w) == null, ss: e.ss || null,
       rest: p.rest ?? e.rest ?? 90,
       step: alt ? (p.astep ?? a.step ?? 2.5) : (p.step ?? e.step ?? 2.5),
-      w: kind !== 'kg' ? null : alt ? (p.aw ?? a.w ?? (a.bodyweight ? 0 : null)) : (p.w ?? e.w ?? null),
+      w: kind !== 'kg' ? null : alt ? (p.aw ?? linkW(a.link) ?? a.w ?? (a.bodyweight ? 0 : null)) : (p.w ?? linkW(e.link) ?? e.w ?? null),
       hold: alt ? (p.ahold ?? a.hold) : (p.hold ?? e.hold),
       mins: alt ? (p.amins ?? a.mins) : (p.mins ?? e.mins),
       each: !!x.each, assist: !!x.assist, bw: !!x.bodyweight,
@@ -1465,7 +1587,8 @@ const ANIM3D = {
     for (const p of sizes) { while (left >= p - 0.001) { out.push(p); left = r1(left - p); } }
     return { plates: out, left };
   }
-  function dayIds(d) { return d.cardio ? listFor(d.id) : [...listFor(d.id), ...listFor('finisher')]; }
+  const finFor = d => listFor('finisher').filter(id => !(d.skipFin || []).includes(id));
+  function dayIds(d) { return d.cardio ? listFor(d.id) : [...listFor(d.id), ...finFor(d)]; }
   function estMin(d) {
     return Math.round(5 + dayIds(d).reduce((s, id) => {
       const c = cfg(id);
@@ -1527,26 +1650,41 @@ const ANIM3D = {
   }
 
   // ---------- plan, forecast, streak ----------
-  const ORDER = ['chest', 'back', 'shoulders', 'legs'];
+  const ORDER_OF = () => progDays().filter(d => !d.optional).map(d => d.id);
   const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const planDays = () => (prefs.plan && Array.isArray(prefs.plan.days) && prefs.plan.days.length ? prefs.plan.days : [1, 2, 3, 5, 6]);
-  const planFixed = () => (prefs.plan && prefs.plan.days ? (prefs.plan.fixed || {}) : { 6: 'cardio' });
+  // fixed workouts per weekday are kept per program (classic keeps the original `fixed` field)
+  function planFixed() {
+    const pl = prefs.plan, prog = progOf();
+    if (pl && pl.fixedBy && pl.fixedBy[prog]) return pl.fixedBy[prog];
+    if (prog === 'classic') return pl && pl.days ? (pl.fixed || {}) : { 6: 'cardio' };
+    return { 6: 'cardio' };
+  }
+  function savePlan(days, fx) {
+    const base = prefs.plan && prefs.plan.days ? Object.assign({}, prefs.plan) : { days: planDays(), fixed: { 6: 'cardio' } };
+    base.days = days;
+    if (progOf() === 'classic') base.fixed = fx; else base.fixedBy = Object.assign({}, base.fixedBy || {}, { [progOf()]: fx });
+    prefs.plan = base; savePrefs();
+  }
   const dayStart = t => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
   const addDays = (t, n) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime(); };
   const weekStartOf = t => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay()).getTime(); };
   const sessionsOn = t0 => { const t1 = addDays(t0, 1); return hist.sessions.filter(x => x.t >= t0 && x.t < t1); };
   function nextLift() {
+    const ORDER = ORDER_OF();
     const lifts = hist.sessions.filter(x => ORDER.includes(x.day));
     const last = lifts[lifts.length - 1];
-    return last ? ORDER[(ORDER.indexOf(last.day) + 1) % ORDER.length] : 'chest';
+    return last ? ORDER[(ORDER.indexOf(last.day) + 1) % ORDER.length] : ORDER[0];
   }
   function forecast(n = 70) {
+    const ORDER = ORDER_OF(); const act = new Set(progDays().map(d => d.id));
     const out = {}; const pd = planDays(); const fx = planFixed(); let idx = ORDER.indexOf(nextLift());
     let t = dayStart(Date.now());
     if (sessionsOn(t).length) t = addDays(t, 1);
     for (let i = 0; i < n; i++) {
       const dow = new Date(t).getDay();
-      if (pd.includes(dow)) { if (fx[dow] && DAY[fx[dow]]) out[t] = fx[dow]; else { out[t] = ORDER[idx]; idx = (idx + 1) % ORDER.length; } }
+      const f0 = fx[dow] && (act.has(fx[dow]) ? fx[dow] : act.has(DAY_EQUIV[fx[dow]]) ? DAY_EQUIV[fx[dow]] : null);
+      if (pd.includes(dow)) { if (f0) out[t] = f0; else { out[t] = ORDER[idx]; idx = (idx + 1) % ORDER.length; } }
       t = addDays(t, 1);
     }
     return out;
@@ -1614,10 +1752,10 @@ const ANIM3D = {
       if (t === today) cls += ' today';
       s += `<button class="${cls}" data-act="daylog" data-date="${t}" aria-label="${fmtDay(t)}${ses.length ? ': ' + ses.length + ' workout' : planned ? ': planned ' + DAY[planned].name : ''}">${inner}</button>`;
     }
-    s += `</div><div class="legend"><span><i class="sw solid"></i>Done</span><span><i class="sw dash"></i>Planned</span><span><i class="sw miss"></i>Missed gym day</span>${DAYS.filter(d => !d.optional).map(d => `<span class="d-${d.color}"><b class="tg">${d.tag}</b>${esc(d.name)}</span>`).join('')}</div></section>`;
+    s += `</div><div class="legend"><span><i class="sw solid"></i>Done</span><span><i class="sw dash"></i>Planned</span><span><i class="sw miss"></i>Missed gym day</span>${progDays().filter(d => !d.optional).map(d => `<span class="d-${d.color}"><b class="tg">${d.tag}</b>${esc(d.name)}</span>`).join('')}</div></section>`;
     s += `<section class="pgroup" style="margin-top:12px"><h3>Your gym days</h3><p class="muted" style="margin:0 0 10px;font-size:14px">Pick the days you train. Set a day to a fixed workout (like Saturday for cardio) or leave it on "Next in order" to rotate Chest → Back → Shoulders → Legs. The app counts a week toward your streak when you hit ${st.goal} workout${st.goal > 1 ? 's' : ''}.</p>
       <div class="plan-days" role="group" aria-label="Gym days">${DOW.map((d, i) => `<button data-act="plan-day" data-dow="${i}" aria-pressed="${pd.includes(i)}">${d}</button>`).join('')}</div>
-      <div class="planrows">${pd.map(i => `<label class="planrow"><span>${DOW[i]}</span><select id="plan-${i}" data-plan-dow="${i}"><option value="">Next in order</option>${DAYS.map(d => `<option value="${d.id}"${planFixed()[i] === d.id ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>`).join('')}</div><div style="height:12px"></div></section>`;
+      <div class="planrows">${pd.map(i => `<label class="planrow"><span>${DOW[i]}</span><select id="plan-${i}" data-plan-dow="${i}"><option value="">Next in order</option>${progDays().map(d => `<option value="${d.id}"${planFixed()[i] === d.id || DAY_EQUIV[planFixed()[i]] === d.id ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>`).join('')}</div><div style="height:12px"></div></section>`;
     return s;
   }
 
@@ -1646,8 +1784,9 @@ const ANIM3D = {
       const d = DAY[draft.day];
       s += `<button class="resume d-${d.color}" data-act="open-day" data-day="${d.id}"><div class="t"><span class="lbl" style="color:inherit;opacity:.8">In progress · tap to continue</span><b>${esc(d.name)}</b></div><span class="num" data-clock>${fmtT((Date.now() - draft.start) / 1000)}</span>${ICON.chev}</button>`;
     }
+    s += `<div class="progsw"><span class="lbl">Program</span><div class="seg" role="group" aria-label="Program">${Object.keys(PROGRAMS).map(k => `<button data-act="program" data-p="${k}" aria-pressed="${progOf() === k}">${esc(PROGRAMS[k].name)}</button>`).join('')}</div></div>`;
     s += '<div class="daylist">';
-    DAYS.forEach(d => {
+    progDays().forEach(d => {
       const ses = hist.sessions.filter(x => x.day === d.id); const last = ses[ses.length - 1];
       const count = dayIds(d).length;
       s += `<button class="daycard d-${d.color}" data-act="open-day" data-day="${d.id}">
@@ -1673,6 +1812,7 @@ const ANIM3D = {
     else if (readyUp(c)) hint = `<span class="hint up">All sets done last time<br><button class="upbtn" data-act="up" data-id="${id}">${c.assist ? 'Try less help' : 'Go up'}: ${fmtW(nextVal(c))} ${shortU(c.kind)}</button></span>`;
     else if (last) hint = `Last: ${entrySetsTxt(last) ? esc(entrySetsTxt(last)) : fmtW(entryVal(last)) + ' ' + shortU(c.kind) + ' · ' + last.d + '/' + last.n + ' sets'} · ${fmtD(last.t)}`;
     else if (c.kind === 'kg' && c.w == null) hint = 'First time on this one. Tap + to set your weight.';
+    else if (c.rr && c.kind === 'kg') hint = `Go up when every set hits ${c.rr[1]} reps.`;
     else if (c.assist) hint = 'Assist weight: lower it as you get stronger.';
     else if (c.kind === 'reps') hint = 'Bodyweight. Add reps as it gets easy.';
     else if (c.kind === 'hold') hint = 'Tap a set to start the hold timer.';
@@ -1700,7 +1840,7 @@ const ANIM3D = {
         const nx = !done[i] && timer && timer.kind === 'rest' && timer.id === id && i === done.filter(Boolean).length && done.slice(0, i).every(Boolean);
         ctrl += `<button class="set${done[i] ? ' on' : ''}${run ? ' run' : ''}${nx ? ' next' : ''}" data-act="set" data-id="${id}" data-i="${i}" aria-pressed="${!!done[i]}" aria-label="Set ${i + 1}">${i + 1}</button>`;
       }
-      ctrl += `<span class="reps">${c.kind === 'kg' ? `× ${c.reps} reps` : c.kind === 'reps' ? 'sets' : `× ${c.hold} s hold`}</span></div>`;
+      ctrl += `<span class="reps">${c.kind === 'kg' ? `× ${c.rr ? c.rr[0] + '–' + c.rr[1] : c.reps} reps` : c.kind === 'reps' ? 'sets' : `× ${c.hold} s hold`}</span></div>`;
       const logged = done.map((x, i) => (x ? `<span>Set ${i + 1}: <b>${setTxt(c.kind, setVal(c, x))}</b></span>` : '')).filter(Boolean);
       if (logged.length) ctrl += `<div class="setlog">${logged.join('')}<em>Tap a done set to change it</em></div>`;
       if (e.plates && !c.alt && c.kind === 'kg' && c.w) {
@@ -1713,7 +1853,9 @@ const ANIM3D = {
       <button class="animbox" data-act="sheet" data-id="${id}" aria-label="How to do ${esc(c.name)}">${fig(c.anim)}<span class="how">How to</span></button>
       <div class="ex-head">
         <button class="ex-name" data-act="sheet" data-id="${id}">${esc(c.name)}</button>
-        <div class="ex-meta">${c.kind === 'time' ? 'Timed' : `${c.sets} sets · rest ${c.rest}s`}</div>
+        <div class="ex-meta">${c.kind === 'time' ? 'Timed' : `${c.sets} sets${c.rr ? ' × ' + c.rr[0] + '–' + c.rr[1] : ''} · ${c.rest ? 'rest ' + c.rest + 's' : 'no rest'}`}</div>
+        ${c.ss ? `<div class="sspill">Superset ${c.ss} · ${c.ss.endsWith('1') ? 'go straight to the next exercise' : 'rest after this one'}</div>` : ''}
+        ${c.sug ? `<div class="sspill sug">Suggested start · adjust after your first set</div>` : ''}
         ${(prefs.ex[id] || {}).memo ? `<div class="memo">${esc(prefs.ex[id].memo)}</div>` : ''}
         ${musChips(c.anim)}
         ${e.alt ? `<div class="seg" role="group" aria-label="Choose version">
@@ -1815,7 +1957,7 @@ const ANIM3D = {
       s += `<div class="sec"><h3>Exercises</h3>${editBtn(d.id)}</div>`;
       s += ui.edit === d.id ? editList(d.id) : listFor(d.id).map(exCard).join('');
       s += `<div class="sec"><h3>Finisher</h3>${editBtn('finisher')}</div>`;
-      s += ui.edit === 'finisher' ? editList('finisher') : listFor('finisher').map(exCard).join('');
+      s += ui.edit === 'finisher' ? editList('finisher') : finFor(d).map(exCard).join('');
     }
     s += `</div>`;
     if (!other) {
@@ -2056,7 +2198,7 @@ const ANIM3D = {
         return `<button class="prow" data-act="daylog" data-date="${new Date(new Date(x.t).toDateString()).getTime()}"><span class="n"><i class="dot d-${d ? d.color : 'steel'}"></i>${esc(d ? d.name : x.day)}<small>${new Date(x.t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · ${x.min} min · ${x.n} exercises</small></span><span></span><span class="w muted" style="font-weight:600;font-size:13px">Edit ›</span></button>`;
       }).join('') + `</section>`;
     }
-    DAYS.forEach(d => { s += group(d.name, d.color, listFor(d.id)); });
+    progDays().forEach(d => { s += group(d.name, d.color, listFor(d.id)); });
     s += group('Finisher', 'steel', listFor('finisher'));
     s += `<section class="pgroup"><h3>Backup</h3><p class="muted" style="margin:0 0 10px;font-size:14px">Everything saves to your account by itself. For extra safety, keep a backup file in your Files app and restore it any time.</p>
       <div class="row" style="padding-bottom:10px"><button class="btn ink" data-act="backup">Save backup file</button><label class="btn" for="restore-file">Restore from file</label><input id="restore-file" type="file" accept=".json,application/json" hidden></div>
@@ -2412,7 +2554,7 @@ const ANIM3D = {
         const i = +b.dataset.dow; let d = planDays().slice();
         d = d.includes(i) ? d.filter(x => x !== i) : [...d, i].sort((a, x) => a - x);
         if (!d.length) { toast('Keep at least one gym day.'); break; }
-        prefs.plan = { days: d, fixed: planFixed() }; savePrefs(); render(); toast('Gym days saved'); break;
+        savePlan(d, planFixed()); render(); toast('Gym days saved'); break;
       }
       case 'edit-toggle': ui.edit = ui.edit === b.dataset.key ? null : b.dataset.key; ui.confirmRm = null; render(); break;
       case 'ex-up': case 'ex-down': {
@@ -2471,7 +2613,9 @@ const ANIM3D = {
           render(); break;
         }
         arr[i] = setRec(c); saveDraft();
-        if (arr.filter(Boolean).length >= c.sets) { setTimer(null); toast(c.name + ' done'); } else startRest(id);
+        if (arr.filter(Boolean).length >= c.sets) { setTimer(null); toast(c.name + ' done'); }
+        else if (c.rest > 0) startRest(id);
+        else { setTimer(null); toast('Now the next exercise, no rest'); }
         render(); break;
       }
       case 'se-w+': case 'se-w-': case 'se-r+': case 'se-r-': case 'se-s+': case 'se-s-': {
@@ -2496,6 +2640,10 @@ const ANIM3D = {
       case 'sheet': ui.sheet = id; renderLayer(); break;
       case 'backup': doBackup(); break;
       case 'slow': ui.slow = !ui.slow; renderLayer(); break;
+      case 'program': {
+        const pnew = b.dataset.p; if (!PROGRAMS[pnew] || pnew === progOf()) break;
+        prefs.program = pnew; savePrefs(); render(); toast(PROGRAMS[pnew].name + ' is now your program'); break;
+      }
       case 'health-open': ui.health = true; renderLayer(); break;
       case 'close': ui.health = null; ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.confirmDel = null; ui.addTo = null; ui.confirmRm = null; renderLayer(); render(); break;
       case 'daylog': ui.dayLog = +b.dataset.date; ui.confirmDel = null; renderLayer(); break;
@@ -2554,7 +2702,7 @@ const ANIM3D = {
     if (ev.target.dataset && ev.target.dataset.planDow != null) {
       const fx = Object.assign({}, planFixed()); const v = ev.target.value; const i = ev.target.dataset.planDow;
       if (v) fx[i] = v; else delete fx[i];
-      prefs.plan = { days: planDays(), fixed: fx }; savePrefs(); render(); toast('Plan saved'); return;
+      savePlan(planDays(), fx); render(); toast('Plan saved'); return;
     }
     if (ev.target.id === 'restore-file') {
       const f = ev.target.files && ev.target.files[0]; if (!f) return;
