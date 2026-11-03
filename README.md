@@ -7,3 +7,7 @@ A gym tracker that works offline: your weekly split, weights, sets, rest timers,
 On iPhone, open the link in Safari, tap Share, then **Add to Home Screen**. After the first open it works without internet.
 
 Your workout data is saved only on your phone. Use **Progress → Backup → Save backup file** now and then to keep a copy.
+
+## Credits
+
+Exercise illustrations by [RepDB (repdb.co)](https://repdb.co/), free tier, used inside this app with attribution. They are not redistributed as a dataset.

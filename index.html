@@ -407,6 +407,18 @@ label.btn{cursor:pointer}
 .progsw .seg button{white-space:normal;line-height:1.2;padding:6px 8px;min-height:40px}
 .sspill{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--day) 18%,transparent);color:var(--ink)}
 .sspill.sug{background:var(--surface2);color:var(--ink2);margin-left:0}
+.illus{position:relative;width:100%;height:100%;background:#DFF4FF;overflow:hidden;--d:3.4s}
+.illus img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.illus img.b{animation:pfade var(--d) ease-in-out infinite}
+.illus.slow{--d:7s}
+.illus .tag{position:absolute;left:10px;top:10px;font-weight:700;font-size:14px;padding:5px 12px;border-radius:999px}
+.illus .ta{background:#fff;color:#12161B;animation:tagA var(--d) infinite}
+.illus .tb{background:var(--day);color:var(--on);animation:tagB var(--d) infinite}
+.bigfig .illus{border-radius:var(--r)}
+.player .bigfig .illus{height:100%}
+.vsw{margin:10px 0 0}
+.frames figure img{background:#DFF4FF;object-fit:contain}
+@media (prefers-reduced-motion: reduce){.illus img.b{animation:none;opacity:0}.illus .tb{display:none}.illus .ta{animation:none}}
 .editbtn{font-weight:700;font-size:14px;min-height:36px;padding:0 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .elist{display:grid;gap:8px}
 .erow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
@@ -1324,6 +1336,12 @@ Object.assign(ANIM3D, {
   u4: ['dumbbell-lateral-raise', 'lateral-raise-machine'], u5: [null, 'lever-biceps-curl'], u6: ['push-down', 'rope-pushdown'],
 });
 
+/* Exercise illustrations: RepDB free tier (repdb.co), used in-app with attribution. [main, alternative] */
+const REP = {"c1":["bench-press","chest-press-machine"],"c2":["smith-machine-incline-bench-press","incline-db-press"],"c3":["chest-press-machine","smith-machine-bench-press"],"c4":["pec-deck","cable-fly"],"c5":["tricep-pushdown","v-bar-tricep-pushdown"],"c6":["seated-dip-machine","assisted-dips"],"c7":["cable-overhead-tricep-extension","machine-triceps-extension"],"b1":["chest-supported-machine-row","seated-cable-row"],"b2":["lat-pulldown","close-grip-lat-pulldown"],"b3":["chest-supported-machine-row","seated-cable-row"],"b4":["t-bar-row","chest-supported-machine-row"],"b5":["wide-grip-seated-cable-row","face-pull"],"b6":["machine-bicep-curl","cable-curl"],"b7":["ez-bar-curl","cable-curl"],"b8":["cable-curl","machine-preacher-curl"],"b9":["bicep-curl","cable-curl"],"s1":["machine-shoulder-press","smith-machine-shoulder-press"],"s2":["dumbbell-front-raise","cable-front-raise"],"s3":["plate-loaded-lateral-raise","cable-lateral-raise"],"s4":["machine-reverse-fly","cable-reverse-fly"],"s5":["db-shrug","plate-loaded-shrug"],"l1":["leg-extension","single-leg-extension"],"l2":["leg-curl","leg-curl"],"l3":["db-squat","hack-squat"],"l4":["leg-press","close-stance-leg-press"],"l5":["seated-calf-raise","standing-calf-raise"],"f1":["assisted-pull-ups","chin-ups"],"f2":["machine-seated-crunch","cable-crunch"],"k1":["incline-treadmill-walk","stair-climber"],"k2":["stationary-bike","elliptical-trainer"],"k3":["rowing-machine","stationary-bike"],"k4":["captains-chair-knee-raise","cable-crunch"],"k5":["bicycle-crunch","machine-seated-crunch"],"k6":["push-up","chest-press-machine"],"k7":["plank","side-plank"],"p1":["incline-db-press","smith-machine-incline-bench-press"],"p2":["chest-press-machine","cable-chest-press"],"p3":["machine-shoulder-press","smith-machine-shoulder-press"],"p4":["plate-loaded-lateral-raise","lateral-raise"],"p5":["cable-overhead-tricep-extension","machine-triceps-extension"],"p6":["tricep-pushdown","v-bar-tricep-pushdown"],"q1":["assisted-pull-ups","chin-ups"],"q2":["lat-pulldown","close-grip-lat-pulldown"],"q3":["chest-supported-machine-row","t-bar-row"],"q4":["rear-delt-fly","machine-reverse-fly"],"q5":["incline-db-curl","machine-bicep-curl"],"r1":["leg-curl","leg-curl"],"r2":["leg-extension","single-leg-extension"],"r3":["leg-press","close-stance-leg-press"],"r4":["dumbbell-romanian-deadlift","smith-machine-rdl"],"u1":["smith-machine-incline-bench-press","smith-machine-incline-bench-press"],"u2":["lat-pulldown","close-grip-lat-pulldown"],"u3":["pec-deck","cable-fly"],"u4":["lateral-raise","plate-loaded-lateral-raise"],"u5":["cable-curl","machine-bicep-curl"],"u6":["tricep-pushdown","tricep-pushdown"]};
+const REP_WARM = {"jumpingJacks":"jumping-jacks","wallPushup":"incline-push-ups","bwSquat":"bodyweight-squat","reverseLunge":"bodyweight-reverse-lunge","gluteBridge":"glute-bridge","calfRaise":"bodyweight-calf-raise","legSwings":"lateral-leg-swing"};
+const REPIMG = {"assisted-dips":["start","peak"],"assisted-pull-ups":["start","peak"],"bench-press":["start","peak"],"bicep-curl":["start","peak"],"bicycle-crunch":["start","peak"],"bodyweight-calf-raise":["start","peak"],"bodyweight-reverse-lunge":["start","peak"],"bodyweight-squat":["start","peak"],"cable-chest-press":["start","peak"],"cable-crunch":["start","peak"],"cable-curl":["start","peak"],"cable-fly":["start","peak"],"cable-front-raise":["start","peak"],"cable-lateral-raise":["start","peak"],"cable-overhead-tricep-extension":["start","peak"],"cable-reverse-fly":["start","peak"],"captains-chair-knee-raise":["start","peak"],"chest-press-machine":["start","peak"],"chest-supported-machine-row":["start","peak"],"chin-ups":["start","peak"],"close-grip-lat-pulldown":["start","peak"],"close-stance-leg-press":["start","peak"],"db-shrug":["start","peak"],"db-squat":["start","peak"],"dumbbell-front-raise":["start","peak"],"dumbbell-romanian-deadlift":["start","peak"],"elliptical-trainer":["main"],"ez-bar-curl":["start","peak"],"face-pull":["start","peak"],"glute-bridge":["start","peak"],"hack-squat":["start","peak"],"incline-db-curl":["start","peak"],"incline-db-press":["start","peak"],"incline-push-ups":["start","peak"],"incline-treadmill-walk":["main"],"jumping-jacks":["start","peak"],"lat-pulldown":["start","peak"],"lateral-leg-swing":["start","peak"],"lateral-raise":["start","peak"],"leg-curl":["start","peak"],"leg-extension":["start","peak"],"leg-press":["start","peak"],"machine-bicep-curl":["start","peak"],"machine-preacher-curl":["start","peak"],"machine-reverse-fly":["start","peak"],"machine-seated-crunch":["start","peak"],"machine-shoulder-press":["start","peak"],"machine-triceps-extension":["start","peak"],"pec-deck":["start","peak"],"plank":["main"],"plate-loaded-lateral-raise":["start","peak"],"plate-loaded-shrug":["start","peak"],"push-up":["start","peak"],"rear-delt-fly":["start","peak"],"rowing-machine":["start","peak"],"seated-cable-row":["start","peak"],"seated-calf-raise":["start","peak"],"seated-dip-machine":["start","peak"],"side-plank":["main"],"single-leg-extension":["start","peak"],"smith-machine-bench-press":["start","peak"],"smith-machine-incline-bench-press":["start","peak"],"smith-machine-rdl":["start","peak"],"smith-machine-shoulder-press":["start","peak"],"stair-climber":["main"],"standing-calf-raise":["start","peak"],"stationary-bike":["main"],"t-bar-row":["start","peak"],"tricep-pushdown":["start","peak"],"v-bar-tricep-pushdown":["start","peak"],"wide-grip-seated-cable-row":["start","peak"]};
+const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline press machine moves the same way.","c1:a":"Picture shows the seated chest press; the lying machine moves the same way.","l2:a":"Picture shows the lying version; on the seated machine you curl the heels down and under.","r1:a":"Picture shows the lying version; on the seated machine you curl the heels down and under.","f1:a":"Picture shows a regular chin-up; on the machine you kneel on the pad for help.","q1:a":"Picture shows a regular chin-up; on the machine you kneel on the pad for help.","b5:m":"Picture shows the cable version; the upper back machine moves the same way.","k3:a":"Picture shows an upright bike; on the recumbent bike you sit back.","u1:a":"Picture shows the Smith machine version; the incline press machine moves the same way.","p1:a":"Picture shows the Smith machine version; the incline press machine moves the same way.","c6:a":"Picture shows the assisted dip machine.","u6:a":"Picture shows a bar; with the rope, spread it apart at the bottom.","c5:m":"Picture shows a bar; with the rope, spread it apart at the bottom.","p6:m":"Picture shows a bar; with the rope, spread it apart at the bottom."};
+
 (function () {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -1633,6 +1651,26 @@ Object.assign(ANIM3D, {
     play: '<svg viewBox="0 0 24 24" width="16" height="16" style="fill:currentColor"><path d="M8 5l11 7-11 7z"/></svg>',
   };
   const fig = (key, opts = {}) => `<svg class="fig" viewBox="0 0 200 170" data-anim="${key}"${opts.always ? ' data-always' : ''}${opts.ph != null ? ` data-ph="${opts.ph}"` : ''}${opts.slow ? ' data-speed="0.5"' : ''} aria-hidden="true"></svg>`;
+  // ---------- exercise visuals: illustration (default) or simple animation ----------
+  const useIllus = () => prefs.visual !== 'draw';
+  const repId = c => (REP[c.id] ? REP[c.id][c.alt ? 1 : 0] : null);
+  const repImgs = rid => (rid && REPIMG[rid] ? REPIMG[rid].map(x => `rep/${rid}-${x}.webp`) : null);
+  function illus(rid, verb, big) {
+    const im = repImgs(rid); if (!im) return '';
+    const cls = 'illus' + (big ? ' big' : '') + (big && ui.slow ? ' slow' : '');
+    if (im.length === 1) return `<div class="${cls}"><img src="${im[0]}" alt="" loading="lazy" decoding="async"></div>`;
+    return `<div class="${cls}"><img src="${im[0]}" alt="Start position" loading="lazy" decoding="async"><img class="b" src="${im[1]}" alt="${esc(verb)} position" loading="lazy" decoding="async">${big ? `<span class="tag ta">1 · Start</span><span class="tag tb">2 · ${esc(verb)}</span>` : ''}</div>`;
+  }
+  function visual(c, big) {
+    const rid = repId(c);
+    if (useIllus() && repImgs(rid)) return illus(rid, verbOf(c.anim), big);
+    return fig(c.anim, big ? { always: true, slow: ui.slow } : {});
+  }
+  function warmVisual(anim, big) {
+    const rid = REP_WARM[anim];
+    if (useIllus() && repImgs(rid)) return illus(rid, 'Move', big);
+    return fig(anim, big ? { always: true } : {});
+  }
   const imgOf = c => (IMG[c.id] ? IMG[c.id][c.alt ? 1 : 0] : null);
   function verbOf(anim) { const i = GymAnim.info(anim); return i.hold ? 'Hold' : i.cont ? 'Keep going' : i.verbs[0]; }
   const photo = (img, verb, cls = '') => img ? `<div class="photo ${cls}"><img src="img/${img}_0.jpg" alt="Start position" decoding="async"><img class="b" src="img/${img}_1.jpg" alt="${esc(verb)} position" decoding="async"><span class="tag ta">1 · Start</span><span class="tag tb">2 · ${esc(verb)}</span></div>` : '';
@@ -1850,7 +1888,7 @@ Object.assign(ANIM3D, {
     }
     return `<article class="ex${complete ? ' complete' : ''}" id="ex-${id}">
       <div class="ex-top">
-      <button class="animbox" data-act="sheet" data-id="${id}" aria-label="How to do ${esc(c.name)}">${fig(c.anim)}<span class="how">How to</span></button>
+      <button class="animbox" data-act="sheet" data-id="${id}" aria-label="How to do ${esc(c.name)}">${visual(c)}<span class="how">How to</span></button>
       <div class="ex-head">
         <button class="ex-name" data-act="sheet" data-id="${id}">${esc(c.name)}</button>
         <div class="ex-meta">${c.kind === 'time' ? 'Timed' : `${c.sets} sets${c.rr ? ' × ' + c.rr[0] + '–' + c.rr[1] : ''} · ${c.rest ? 'rest ' + c.rest + 's' : 'no rest'}`}</div>
@@ -1875,7 +1913,7 @@ Object.assign(ANIM3D, {
     list.forEach((id, i) => {
       const c = cfg(id);
       const val = c.kind === 'kg' ? (c.w == null ? 'no weight yet' : fmtW(c.w) + ' ' + unitOf(c)) : c.kind === 'time' ? c.mins + ' min' : c.kind === 'hold' ? c.hold + ' s hold' : c.reps + ' reps';
-      s += `<div class="erow"><div class="animbox">${fig(c.anim)}</div><button class="t" data-act="sheet" data-id="${id}"><b>${esc(c.name)}</b><small>${c.kind === 'time' ? '' : c.sets + ' sets · '}${esc(val)}${getEx(id).custom ? ' · yours' : ''}</small></button>
+      s += `<div class="erow"><div class="animbox">${visual(c)}</div><button class="t" data-act="sheet" data-id="${id}"><b>${esc(c.name)}</b><small>${c.kind === 'time' ? '' : c.sets + ' sets · '}${esc(val)}${getEx(id).custom ? ' · yours' : ''}</small></button>
         <div class="ebtns"><button class="iconbtn sm" data-act="ex-up" data-key="${key}" data-id="${id}" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>↑</button><button class="iconbtn sm" data-act="ex-down" data-key="${key}" data-id="${id}" aria-label="Move down" ${i === list.length - 1 ? 'disabled' : ''}>↓</button>
         ${ui.confirmRm === id ? `<button class="rmbtn" data-act="ex-remove-yes" data-key="${key}" data-id="${id}">Remove?</button>` : `<button class="rmbtn" data-act="ex-remove" data-id="${id}" aria-label="Remove ${esc(c.name)}">✕</button>`}</div></div>`;
     });
@@ -1939,7 +1977,7 @@ Object.assign(ANIM3D, {
     }
     const wlist = WARMUPS[d.warm];
     const warmDone = draft && draft.day === d.id && draft.warm;
-    s += `<div class="warm${warmDone ? ' done' : ''}"><div class="animbox">${fig(wlist[0].anim)}</div>
+    s += `<div class="warm${warmDone ? ' done' : ''}"><div class="animbox">${warmVisual(wlist[0].anim)}</div>
       <div class="t"><h4>5-minute warm-up${warmDone ? ' · done' : ''}</h4><p>${wlist.map(w => w.name).join(', ')}</p></div>
       <button class="btn primary" data-act="warmup" ${other ? 'disabled' : ''}>${ICON.play}Start</button></div>`;
     s += `<div ${other ? 'inert style="opacity:.5"' : ''}>`;
@@ -2202,7 +2240,7 @@ Object.assign(ANIM3D, {
     s += group('Finisher', 'steel', listFor('finisher'));
     s += `<section class="pgroup"><h3>Backup</h3><p class="muted" style="margin:0 0 10px;font-size:14px">Everything saves to your account by itself. For extra safety, keep a backup file in your Files app and restore it any time.</p>
       <div class="row" style="padding-bottom:10px"><button class="btn ink" data-act="backup">Save backup file</button><label class="btn" for="restore-file">Restore from file</label><input id="restore-file" type="file" accept=".json,application/json" hidden></div>
-      <p class="muted" style="font-size:12px;margin:0 0 12px">Last workout saved: ${S.length ? fmtD(S[S.length - 1].t) : 'none yet'}</p></section>`;
+      <p class="muted" style="font-size:12px;margin:0 0 12px">Last workout saved: ${S.length ? fmtD(S[S.length - 1].t) : 'none yet'} · Exercise illustrations by <a href="https://repdb.co/" target="_blank" rel="nofollow noopener">RepDB (repdb.co)</a></p></section>`;
     return s;
   }
 
@@ -2228,11 +2266,18 @@ Object.assign(ANIM3D, {
       <div class="hd"><div class="grow"><div class="lbl">${e.custom ? 'Your exercise' : c.alt ? esc(altLabel(e)) + ' version' : 'Main version'}</div><h2>${esc(c.name)}</h2></div>
       <button class="iconbtn" data-act="close" aria-label="Close">${ICON.close}</button></div>
       ${e.alt ? `<div class="seg" role="group" aria-label="Choose version"><button data-act="variant" data-id="${id}" data-v="m" aria-pressed="${!c.alt}">${esc(p.name || e.name)}</button><button data-act="variant" data-id="${id}" data-v="a" aria-pressed="${c.alt}">${esc(p.aname || e.alt.name)}</button></div>` : ''}
-      <div class="bigfig">${fig(c.anim, { always: true, slow: ui.slow })}</div>
+      <div class="seg vsw" role="group" aria-label="Picture style"><button data-act="visual" data-v="illus" aria-pressed="${useIllus()}">Illustration</button><button data-act="visual" data-v="draw" aria-pressed="${!useIllus()}">Animation</button></div>
+      <div class="bigfig">${visual(c, true)}</div>
+      ${useIllus() && REP_NOTE[id + ':' + c.v] ? `<p class="muted" style="margin:-4px 0 8px;font-size:13px">${esc(REP_NOTE[id + ':' + c.v])}</p>` : ''}
       <div class="row" style="align-items:center"><button class="btn" data-act="slow" aria-pressed="${ui.slow}">${ui.slow ? 'Normal speed' : 'Slow down'}</button>
       ${anim3d(c) ? `<a class="btn primary" href="${anim3d(c)}" target="_blank" rel="noopener">▶ 3D animation</a>` : ''}<a class="btn" href="${ytLink(c.name)}" target="_blank" rel="noopener">▶ Video</a></div>
       ${musChips(c.anim).replace('class="mus"', 'class="mus" style="margin-top:12px"')}
-      ${GymAnim.info(c.anim).cont || GymAnim.info(c.anim).hold ? '' : `<div class="frames"><figure>${fig(c.anim, { ph: 0 })}<figcaption>1 · Start</figcaption></figure><figure>${fig(c.anim, { ph: 0.4 })}<figcaption>2 · ${esc(verbOf(c.anim))}</figcaption></figure></div>`}`;
+      ${(() => {
+        const im = useIllus() ? repImgs(repId(c)) : null;
+        if (im && im.length > 1) return `<div class="frames"><figure><img src="${im[0]}" alt="Start position" loading="lazy"><figcaption>1 · Start</figcaption></figure><figure><img src="${im[1]}" alt="End position" loading="lazy"><figcaption>2 · ${esc(verbOf(c.anim))}</figcaption></figure></div>`;
+        if (im) return '';
+        return GymAnim.info(c.anim).cont || GymAnim.info(c.anim).hold ? '' : `<div class="frames"><figure>${fig(c.anim, { ph: 0 })}<figcaption>1 · Start</figcaption></figure><figure>${fig(c.anim, { ph: 0.4 })}<figcaption>2 · ${esc(verbOf(c.anim))}</figcaption></figure></div>`;
+      })()}`;
     s += `<div class="sec"><h3>How to</h3></div><ol class="cues">${c.cues.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
     if (c.kind === 'time') {
       s += `<div class="sec"><h3>Settings</h3><span class="lbl">Saved automatically</span></div>${c.setting ? `<p class="muted" style="margin:0 0 8px">${esc(c.setting)}</p>` : ''}
@@ -2351,7 +2396,7 @@ Object.assign(ANIM3D, {
     return `<div class="player d-${p.color}" role="dialog" aria-modal="true" aria-label="Warm-up"><div class="in">
       <div style="display:flex;align-items:center;gap:10px"><div style="flex:1"><div class="lbl">Warm-up · ${fmtT(remaining)} left</div></div><button class="iconbtn" data-act="warm-close" aria-label="Close warm-up">${ICON.close}</button></div>
       <div class="segs">${p.list.map((x, i) => `<i><b style="width:${i < p.i ? 100 : i === p.i ? Math.round((1 - p.left / x.s) * 100) : 0}%"></b></i>`).join('')}</div>
-      <div class="bigfig">${fig(p.finished ? 'jumpingJacks' : w.anim, { always: true })}</div>
+      <div class="bigfig">${warmVisual(p.finished ? 'jumpingJacks' : w.anim, true)}</div>
       ${p.finished
         ? `<div class="now"><div class="grow"><h2>Warmed up</h2><p>Muscles are ready. Start with a light warm-up set on your first exercise.</p></div></div><button class="btn primary wide" data-act="warm-close">Start training</button>`
         : `<div class="now"><div class="grow"><div class="lbl">${p.i + 1} of ${p.list.length}${p.i < p.list.length - 1 ? ' · next: ' + esc(p.list[p.i + 1].name) : ''}</div><h2>${esc(w.name)}</h2><p>${esc(w.tip)}</p></div><div class="cnt num" data-pcount>${fmtT(p.left)}</div></div>
@@ -2640,6 +2685,7 @@ Object.assign(ANIM3D, {
       case 'sheet': ui.sheet = id; renderLayer(); break;
       case 'backup': doBackup(); break;
       case 'slow': ui.slow = !ui.slow; renderLayer(); break;
+      case 'visual': prefs.visual = b.dataset.v === 'draw' ? 'draw' : 'illus'; savePrefs(); renderLayer(); render(); break;
       case 'program': {
         const pnew = b.dataset.p; if (!PROGRAMS[pnew] || pnew === progOf()) break;
         prefs.program = pnew; savePrefs(); render(); toast(PROGRAMS[pnew].name + ' is now your program'); break;
