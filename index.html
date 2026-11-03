@@ -1813,6 +1813,7 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
   function homeView() {
     let s = topBar(false);
     s += `<section class="intro"><h1 class="disp" style="font-size:44px">Pick today's session</h1><p>Four lifting days and an optional cardio and core day. Every lifting day starts with a 5-minute warm-up and ends with pull-ups and crunches.</p></section>`;
+    s += `<div class="progsw"><span class="lbl">Your program · tap to switch</span><div class="seg" role="group" aria-label="Program">${Object.keys(PROGRAMS).map(k => `<button data-act="program" data-p="${k}" aria-pressed="${progOf() === k}">${esc(PROGRAMS[k].name)}</button>`).join('')}</div></div>`;
     s += nextCard();
     s += habitsCard();
     s += `<div class="weekhd"><span class="lbl">This week</span><button class="linkbtn" data-act="calendar">Full calendar ›</button></div>`;
@@ -1822,7 +1823,6 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
       const d = DAY[draft.day];
       s += `<button class="resume d-${d.color}" data-act="open-day" data-day="${d.id}"><div class="t"><span class="lbl" style="color:inherit;opacity:.8">In progress · tap to continue</span><b>${esc(d.name)}</b></div><span class="num" data-clock>${fmtT((Date.now() - draft.start) / 1000)}</span>${ICON.chev}</button>`;
     }
-    s += `<div class="progsw"><span class="lbl">Program</span><div class="seg" role="group" aria-label="Program">${Object.keys(PROGRAMS).map(k => `<button data-act="program" data-p="${k}" aria-pressed="${progOf() === k}">${esc(PROGRAMS[k].name)}</button>`).join('')}</div></div>`;
     s += '<div class="daylist">';
     progDays().forEach(d => {
       const ses = hist.sessions.filter(x => x.day === d.id); const last = ses[ses.length - 1];
