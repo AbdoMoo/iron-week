@@ -419,6 +419,12 @@ label.btn{cursor:pointer}
 .vsw{margin:10px 0 0}
 .frames figure img{background:#DFF4FF;object-fit:contain}
 @media (prefers-reduced-motion: reduce){.illus img.b{animation:none;opacity:0}.illus .tb{display:none}.illus .ta{animation:none}}
+.moverow{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.moverow label{font-size:13px;font-weight:700;color:var(--ink2)}
+.moverow input{font:inherit;font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;height:42px;padding:0 10px;min-width:0;flex:1}
+.addlog{margin-top:18px;padding:12px;border:2px dashed var(--line);border-radius:var(--r)}
+.addlog h3{font-family:var(--display);font-weight:800;font-size:20px;text-transform:uppercase;margin:0 0 4px}
+.addsel{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;height:44px;padding:0 10px}
 .editbtn{font-weight:700;font-size:14px;min-height:36px;padding:0 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .elist{display:grid;gap:8px}
 .erow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
@@ -1443,6 +1449,22 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
     else hist.sessions.forEach(x => { if (x.t === t) x.n = entriesOf(t).length; });
     saveHist();
   }
+  function moveSession(t, toDay) {
+    let nt = toDay + (t - dayStart(t));
+    if (dayStart(nt) === dayStart(t)) return false;
+    const taken = new Set([...hist.sessions.map(x => x.t), ...((hist.del || {}).s || [])]);
+    while (taken.has(nt)) nt++;
+    Object.keys(hist.log).forEach(id => { (hist.log[id] || []).forEach(e => { if (e.t === t) e.t = nt; }); hist.log[id].sort((a, b) => a.t - b.t); });
+    hist.sessions.forEach(x => { if (x.t === t) x.t = nt; });
+    hist.sessions.sort((a, b) => a.t - b.t);
+    delMark().s.push(t);
+    saveHist(); return nt;
+  }
+  function startBackdated(dayId, dayT) {
+    if (hasProgress()) { toast('Finish or discard the workout in progress first.'); return; }
+    newDraft(dayId); draft.backdate = dayT + 12 * 36e5 + (Date.now() % 60000); saveDraft();
+    ui.dayLog = null; renderLayer(); openDay(dayId);
+  }
   function deleteSession(t) {
     Object.keys(hist.log).forEach(id => { hist.log[id] = (hist.log[id] || []).filter(e => e.t !== t); });
     hist.sessions = hist.sessions.filter(x => x.t !== t);
@@ -1821,7 +1843,7 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
     const nxDay = nextPlanned().day;
     if (hasProgress()) {
       const d = DAY[draft.day];
-      s += `<button class="resume d-${d.color}" data-act="open-day" data-day="${d.id}"><div class="t"><span class="lbl" style="color:inherit;opacity:.8">In progress · tap to continue</span><b>${esc(d.name)}</b></div><span class="num" data-clock>${fmtT((Date.now() - draft.start) / 1000)}</span>${ICON.chev}</button>`;
+      s += `<button class="resume d-${d.color}" data-act="open-day" data-day="${d.id}"><div class="t"><span class="lbl" style="color:inherit;opacity:.8">${draft.backdate || dayStart(draft.start) < dayStart(Date.now()) ? 'Not saved yet · from ' + esc(new Date(draft.backdate || draft.start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })) + ' · tap to finish' : 'In progress · tap to continue'}</span><b>${esc(d.name)}</b></div><span class="num" data-clock>${fmtT((Date.now() - draft.start) / 1000)}</span>${ICON.chev}</button>`;
     }
     s += '<div class="daylist">';
     progDays().forEach(d => {
@@ -1968,7 +1990,8 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
     let s = topBar(true);
     const other = hasProgress() && draft.day !== d.id;
     const started = draft && draft.day === d.id && draft.start;
-    s += `<section class="band"><div class="lbl" style="color:inherit;opacity:.8">${d.optional ? 'Optional day' : 'Today'}</div><h2 class="disp">${esc(d.name)}</h2>
+    const bd = draft && draft.day === d.id ? (draft.backdate || (draft.start && dayStart(draft.start) < dayStart(Date.now()) ? draft.start : null)) : null;
+    s += `<section class="band"><div class="lbl" style="color:inherit;opacity:.8">${bd ? 'Saving to ' + esc(new Date(bd).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })) : d.optional ? 'Optional day' : 'Today'}</div><h2 class="disp">${esc(d.name)}</h2>
       <div class="meta"><span>${dayIds(d).length} exercises</span><span>About ${estMin(d)} min</span>${started ? `<span>Time <span class="clock num" data-clock>${fmtT((Date.now() - draft.start) / 1000)}</span></span>` : ''}</div></section>`;
     if (other) {
       s += `<div class="blocker"><p><b>${esc(DAY[draft.day].name)}</b> is still in progress. Finish it or discard it before starting this one.</p>
@@ -2341,6 +2364,7 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
       if (pl) s += `<div class="blocker d-${DAY[pl].color}" style="margin-top:12px"><p>Planned: <b>${esc(DAY[pl].name)}</b></p>${start === dayStart(Date.now()) ? `<button class="btn primary" data-act="open-day" data-day="${pl}">Start ${esc(DAY[pl].name)}</button>` : '<p class="muted" style="margin:0;font-size:13px">Changes automatically if you train a different day first.</p>'}</div>`;
       else s += `<p class="empty" style="margin-top:12px">${start > dayStart(Date.now()) ? 'Rest day.' : 'Nothing logged on this day.'}</p>`;
     }
+    const todayT = dayStart(Date.now());
     ses.forEach(x => {
       const d = DAY[x.day] || { name: x.day, color: 'steel' };
       const ents = entriesOf(x.t);
@@ -2351,8 +2375,15 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
       });
       s += `</ul><div class="row" style="margin-top:10px">` + (ui.confirmDel === x.t
         ? `<button class="btn" data-act="del-session-yes" data-t="${x.t}" style="color:var(--red)">Yes, delete this workout</button><button class="btn" data-act="del-session-no">Keep it</button>`
-        : `<button class="btn" data-act="del-session" data-t="${x.t}">Delete whole workout</button>`) + `</div></section>`;
+        : `<button class="btn" data-act="del-session" data-t="${x.t}">Delete whole workout</button>`) + `</div>
+        <div class="moverow"><label for="mv-${x.t}">Move to</label><input id="mv-${x.t}" type="date" value="${isoDay(x.t)}" max="${isoDay(todayT)}"><button class="btn" data-act="move-session" data-t="${x.t}">Move</button></div></section>`;
     });
+    if (start <= todayT) {
+      const opts = progDays().map(d => `<option value="${d.id}"${forecast(1)[start] === d.id ? ' selected' : ''}>${esc(d.name)}</option>`).join('');
+      s += `<section class="addlog"><h3>${ses.length ? 'Add another workout' : 'Did you train this day?'}</h3>
+        <p class="muted" style="margin:0 0 8px;font-size:13px">Pick the workout, tick the sets you did and tap Finish. It's saved on ${esc(new Date(start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))}.</p>
+        <div class="row"><select id="addlog-day" class="addsel">${opts}</select><button class="btn primary" data-act="add-past" data-date="${start}">Log it</button></div></section>`;
+    }
     s += `<div style="margin-top:16px"><button class="btn ink wide" data-act="close">Done</button></div></div></div>`;
     return s;
   }
@@ -2547,7 +2578,10 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
     render(); renderBar(); window.scrollTo(0, 0);
   }
   function finishWorkout() {
-    const d = DAY[draft.day], now = Date.now();
+    const d = DAY[draft.day];
+    const stale = draft.start && dayStart(draft.start) < dayStart(Date.now());
+    let now = draft.backdate || (stale ? draft.start : Date.now());
+    while (hist.sessions.some(x => x.t === now) || ((hist.del || {}).s || []).includes(now)) now++;
     let count = 0, sets = 0, vol = 0; const ups = [], at = {}, prs = [];
     dayIds(d).forEach(id => {
       const c = cfg(id);
@@ -2576,8 +2610,10 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
       if (n >= c.sets && entry.hit && !(c.kind === 'kg' && (c.w == null || (c.bw && !c.w)))) { ups.push(id); at[id] = valOf(c); }
     });
     if (!count) { ui.confirmFinish = false; render(); toast('Tick at least one set first.'); return; }
-    const mins = Math.max(1, Math.round((now - (draft.start || now)) / 60000));
+    const mins = draft.backdate || stale ? estMin(d) : Math.max(1, Math.round((Date.now() - (draft.start || Date.now())) / 60000));
     hist.sessions.push({ t: now, day: d.id, min: mins, n: count, vol });
+    hist.sessions.sort((x, y) => x.t - y.t);
+    Object.keys(hist.log).forEach(k => hist.log[k].sort((x, y) => x.t - y.t));
     hist.sessions = hist.sessions.slice(-600);
     saveHist();
     timer = null; renderBar();
@@ -2693,6 +2729,16 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
       case 'health-open': ui.health = true; renderLayer(); break;
       case 'close': ui.health = null; ui.setEdit = null; ui.sheet = null; ui.summary = null; ui.dayLog = null; ui.confirmDel = null; ui.addTo = null; ui.confirmRm = null; renderLayer(); render(); break;
       case 'daylog': ui.dayLog = +b.dataset.date; ui.confirmDel = null; renderLayer(); break;
+      case 'move-session': {
+        const t = +b.dataset.t; const inp = $('#mv-' + t); if (!inp || !inp.value) break;
+        const [yy, mm, dd] = inp.value.split('-').map(Number); const to = new Date(yy, mm - 1, dd).getTime();
+        if (to > dayStart(Date.now())) { toast('You can only move it to today or an earlier day.'); break; }
+        const nt = moveSession(t, to);
+        if (!nt) { toast('Pick a different day.'); break; }
+        ui.dayLog = dayStart(nt); ui.calMonth = new Date(new Date(nt).getFullYear(), new Date(nt).getMonth(), 1).getTime();
+        renderLayer(); render(); toast('Moved to ' + new Date(nt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })); break;
+      }
+      case 'add-past': { const sel = $('#addlog-day'); if (sel) startBackdated(sel.value, +b.dataset.date); break; }
       case 'del-entry': deleteEntry(id, +b.dataset.t, b.dataset.v); toast('Removed'); renderLayer(); render(); break;
       case 'del-session': ui.confirmDel = +b.dataset.t; renderLayer(); break;
       case 'del-session-no': ui.confirmDel = null; renderLayer(); break;
