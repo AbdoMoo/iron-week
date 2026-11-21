@@ -425,6 +425,18 @@ label.btn{cursor:pointer}
 .addlog{margin-top:18px;padding:12px;border:2px dashed var(--line);border-radius:var(--r)}
 .addlog h3{font-family:var(--display);font-weight:800;font-size:20px;text-transform:uppercase;margin:0 0 4px}
 .addsel{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;height:44px;padding:0 10px}
+.ses-sum{margin:2px 0 8px;font-weight:700;font-size:14px;color:var(--ink2)}
+.ses-sum.up{color:var(--good)}
+.histlist.prog li{align-items:center;gap:8px;padding:8px;border-radius:10px;border-bottom:0;margin-bottom:4px;background:var(--surface2)}
+.histlist.prog li.pr-up{background:var(--good-bg);box-shadow:inset 3px 0 0 var(--good)}
+.pl-main{min-width:0;display:grid;gap:1px}
+.pl-name{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-weight:600}
+.pl-was{color:var(--ink2);font-size:12px}
+.dlt{font-size:12px;font-weight:800;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.dlt.up{background:var(--good);color:#fff}
+.dlt.same{background:var(--surface);color:var(--ink2);border:1px solid var(--line)}
+.dlt.down{background:var(--surface);color:var(--red);border:1px solid var(--line)}
+.dlt.new{background:var(--surface);color:var(--ink);border:1px dashed var(--line)}
 .editbtn{font-weight:700;font-size:14px;min-height:36px;padding:0 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .elist{display:grid;gap:8px}
 .erow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
@@ -2370,6 +2382,40 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
     if (!e) return 'Removed exercise';
     return x.v === 'a' && e.alt ? (p.aname || e.alt.name) : (p.name || e.name);
   }
+  // ---------- progress vs the last time (same exercise, or the same movement on another day) ----------
+  function eachOf(id, v) { const e = getEx(id); if (!e) return false; return v === 'a' ? !!(e.alt || {}).each : !!e.each; }
+  function prevEntry(en) {
+    const k = en.k || 'kg';
+    const same = (hist.log[en.id] || []).filter(x => x.t < en.t && x.v === en.v && (x.k || 'kg') === k);
+    if (same.length) return { e: same[same.length - 1], id: en.id };
+    const rid = REP[en.id] ? REP[en.id][en.v === 'a' ? 1 : 0] : null;
+    if (!rid) return null;
+    const ea = eachOf(en.id, en.v); let best = null;
+    Object.keys(REP).forEach(id => {
+      if (id === en.id) return;
+      [0, 1].forEach(i => {
+        if (REP[id][i] !== rid) return; const v = i ? 'a' : 'm';
+        if (eachOf(id, v) !== ea) return;
+        (hist.log[id] || []).forEach(x => { if (x.t < en.t && x.v === v && (x.k || 'kg') === k && (!best || x.t > best.e.t)) best = { e: x, id }; });
+      });
+    });
+    return best;
+  }
+  const repsOf = e => (e.sets || []).reduce((a, x) => a + (x.r || 0), 0);
+  function progressOf(en) {
+    if (en.k === 'time') return null;
+    const p = prevEntry(en);
+    if (!p) return { cls: 'new', badge: 'New', sub: 'First time logged' };
+    const a = !!en.a, now = topOf(en), was = topOf(p.e), u = shortU(en.k || 'kg');
+    const d = r1(now - was), better_ = a ? d < 0 : d > 0, worse = a ? d > 0 : d < 0;
+    const where = p.id !== en.id ? ` · ${esc(entryName(Object.assign({ id: p.id }, p.e)))}` : '';
+    const sub = `Last time ${fmtW(was)} ${u} on ${fmtD(p.e.t)}${where}`;
+    if (better_) return { cls: 'up', badge: `▲ ${d > 0 ? '+' : ''}${fmtW(d)} ${u}${a ? ' less help' : ''}`, sub };
+    if (worse) return { cls: 'down', badge: `▼ ${fmtW(d)} ${u}`, sub };
+    if (repsOf(en) > repsOf(p.e) && repsOf(p.e)) return { cls: 'up', badge: '▲ More reps', sub };
+    return { cls: 'same', badge: '= Same', sub };
+  }
+
   function dayLogHTML() {
     const start = ui.dayLog, end = start + 864e5;
     const ses = hist.sessions.filter(x => x.t >= start && x.t < end);
@@ -2385,10 +2431,17 @@ const REP_NOTE = {"c2:m":"Picture shows the Smith machine version; the incline p
     ses.forEach(x => {
       const d = DAY[x.day] || { name: x.day, color: 'steel' };
       const ents = entriesOf(x.t);
-      s += `<section class="logday d-${d.color}"><h3><i class="dot"></i>${esc(d.name)} <span class="muted" style="font-size:13px;font-weight:600;text-transform:none">${new Date(x.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · ${x.min} min</span></h3><ul class="histlist">`;
-      ents.forEach(en => {
+      const order = DAY[x.day] ? dayIds(DAY[x.day]) : [];
+      const pos = id => { const i = order.indexOf(id); return i < 0 ? 999 : i; };
+      ents.sort((p, q) => pos(p.id) - pos(q.id));
+      const prog = ents.map(progressOf); const graded = prog.filter(p => p && p.cls !== 'new'); const ups = graded.filter(p => p.cls === 'up').length;
+      s += `<section class="logday d-${d.color}"><h3><i class="dot"></i>${esc(d.name)} <span class="muted" style="font-size:13px;font-weight:600;text-transform:none">${new Date(x.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · ${x.min} min</span></h3>`;
+      if (graded.length) s += `<p class="ses-sum${ups ? ' up' : ''}">${ups ? '▲ ' + ups + ' of ' + graded.length + ' exercises went up' : 'Same weights as last time'}${x.vol ? ' · ' + x.vol.toLocaleString('en-US') + ' kg lifted' : ''}</p>`;
+      s += `<ul class="histlist prog">`;
+      ents.forEach((en, i) => {
         const val = en.k === 'time' ? en.m + ' min' : (entrySetsTxt(en) || fmtW(entryVal(en)) + ' ' + shortU(en.k || 'kg') + ' · ' + en.d + '/' + en.n + ' sets');
-        s += `<li style="align-items:center;gap:8px"><span style="min-width:0">${esc(entryName(en))}<br><small class="muted num">${val}</small></span><button class="rmbtn" data-act="del-entry" data-id="${en.id}" data-t="${en.t}" data-v="${en.v}" aria-label="Remove ${esc(entryName(en))} from this day">Remove</button></li>`;
+        const p = prog[i];
+        s += `<li class="${p ? 'pr-' + p.cls : ''}"><span class="pl-main"><span class="pl-name">${esc(entryName(en))}${p ? `<b class="dlt ${p.cls}">${p.badge}</b>` : ''}</span><small class="num">${val}</small>${p ? `<small class="pl-was">${p.sub}</small>` : ''}</span><button class="rmbtn" data-act="del-entry" data-id="${en.id}" data-t="${en.t}" data-v="${en.v}" aria-label="Remove ${esc(entryName(en))} from this day">Remove</button></li>`;
       });
       s += `</ul><div class="row" style="margin-top:10px">` + (ui.confirmDel === x.t
         ? `<button class="btn" data-act="del-session-yes" data-t="${x.t}" style="color:var(--red)">Yes, delete this workout</button><button class="btn" data-act="del-session-no">Keep it</button>`
